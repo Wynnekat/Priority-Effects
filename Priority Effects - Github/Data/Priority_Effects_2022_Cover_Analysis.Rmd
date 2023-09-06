@@ -1,0 +1,1312 @@
+---
+title: "Priority Effects - Exploratory Analysis of 2022 Cover Data"
+output:
+  html_document: default
+  pdf_document: default
+date: "2022-12-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# PROLOG   ##############################################################################
+
+# PROJECT: Priority Effects Experiment 
+# PURPOSE: Determine how species arrival via seed additions affects the community assembly of restored prairie plant communities
+#
+# AUTHOR:  Katherine Wynne (Wynnekat@msu.edu)
+# COLLAB:  L. Sullivan
+# CREATED: 06 December 2022
+#
+# FILES:   1) inner_cover_summer_2022.xlsx - vegetative cover taken in the Summer (end of June)
+#          2) inner_cover_fall _2022.xlsx - vegetative cover taken at peak biomass (end ofAugust)
+#          3) Checklist of Missouri Flora.xlsx - contains the information about all plants found in MO
+#          4) Cleaned_PE_Detailed_Species_List_2022.xlsx - dataset containing the information about only                                                                plants found in the study
+#         
+#LAST UPDATED: 09 December 2022
+# PROLOG   ##############################################################################
+```
+
+#### Treatment information
+
+NON = None (no species seeded)
+
+SIM = Simulataneous (36 species seeded on March 22nd, 2021)
+
+LE = Lumped early (18 early-dispersing species seeded on March 23rd, 2021 then 18 late-dispersing species seeded on September 5th, 2021)
+
+LL = Lumped late (18 late-dispersing species seeded on March 23rd, 2021 then 18 early-dispersing species seeded on September 5th, 2021)
+
+NAT = Natural; species added according to peak dispersal date
+
+        - May 24th 2021 (VIOPED, PACPLA)
+        - June 4th 2021 (SISCAM, SPHOBT, CORLAN)
+        - June 22nd 2021 (LOBSPI, TRAOHI, CARBUS, HEURIC)
+        - July 11th 2021 (CORPAL, DODMEA)
+        - July 25th 2021 (KOEMAC, AMOCAN)
+        - August 2nd 2021 (LINSUL, MELVIR)
+        - August 21st 2021 (DALCAN, DALPUR, ACHMIL)
+        - September 17th 2021 (CROSAG)
+        - October 4th 2021 (CHAFAS, MONFIS, RATPIN, SPOHET, RUDHIR)
+        - October 18th 2021 (BIDARI, HELMOL, LESCAP)
+        - November 1st 2021 (PENDIG, ERYYUC, HYPPUN, SORNUT, SCHSCO, LIAPYC)
+        - November 19th 2021 (CORTRI, PYCTEN, SOLRIG)
+      
+      
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+## Libraries
+
+
+# Import excel files
+library(readxl)
+
+# Data cleaning and visualization
+library(tidyverse)
+
+# Community ecology functions (NMDS, diversity indices, etc.)
+library(vegan)
+
+# Export dataframes to excel files
+library(writexl)
+
+# Dimensions check for NMDS stress
+library(goeveg)
+
+# Function for pairwise PERMANOVA tests
+
+library(pairwiseAdonis)
+
+# Function that allows for 3D NMDS plots
+library(vegan3d)
+
+#Makes grided figures
+library(cowplot)
+
+#Makes the sig bars
+library(ggsignif)
+
+#Mixed models
+
+library(lme4)
+library(lmerTest)
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+## Import Datasets
+
+#Working directory that contains datasets
+setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
+
+#Import datasets
+
+## inner (1 m^2) cover for summer 2022
+#### comprehensive vegetative cover (%) for all species in the inner (1 m^2) permanent sampling area. 
+
+inner_cover_summer_2022 <- read_excel("PE_Cover_Inner_Summer_2022_Cleaned.xlsx")
+
+inner_cover_summer_2023 <- read_excel("PE_Cover_Inner_Summer_2023_Cleaned.xlsx")
+
+## inner (1 m^2) cover for fall 2022
+#### comprehensive vegetative cover (%) for all species in the inner (1 m^2) permanent sampling area. 
+
+inner_cover_fall_2022 <- read_excel("PE_Cover_Inner_Fall_2022_Cleaned.xlsx")
+
+
+## Bradford weather
+weather <- read_excel("Bradford_10_Year_Weather.xlsx")
+
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+## 2022 Inner Cover - Dataset cleaning
+
+### Remove unnecessary columns
+
+### Get rid of the notes, unknown, and sentenced columns
+
+#### Summer
+inner_cover_summer_2022 <- inner_cover_summer_2022[,-8]
+
+#### Fall
+inner_cover_fall_2022 <- inner_cover_fall_2022[,-c(8,9,10)]
+
+
+### Get rid of EMP 
+
+#### Summer
+inner_cover_summer_2022 <- subset(inner_cover_summer_2022, Treatment != "EMP")
+
+#### Fall
+inner_cover_fall_2022 <- subset(inner_cover_fall_2022, Treatment != "EMP")
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#Checking to make sure all the SPP6 levels are correct (no misspellings or weirdness)
+
+### Summer
+sort(unique(inner_cover_summer_2022$SPP6))
+
+### Fall
+sort(unique(inner_cover_fall_2022$SPP6))
+
+### ^ above looks good so far
+
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+### Fully join both datasets together
+Full_data <- full_join(inner_cover_summer_2022,inner_cover_fall_2022)
+
+
+### Remove season and year
+Full_data <- Full_data[, -c(1,2)]
+
+
+### Lump the Carex for now (*****Ask Lauren about what to do about when the CARSPP > CARFRA or CARBRE?***)
+for(i in 1:nrow(Full_data)){
+  
+  if(Full_data[i,3] == "CARFRA"){Full_data [i,3] <- "CARSPP"}
+  if(Full_data [i,3] == "CARBRE"){Full_data [i,3] <- "CARSPP"}
+  if(Full_data [i,5] == "Carex brevior"){Full_data [i,5] <- "Carex spp."}
+  if(Full_data [i,5] == "Carex frankii"){Full_data [i,5] <- "Carex spp."}
+  if(Full_data [i,5] == "Heuchera richardsonii"){Full_data [i,5] <- "Geum canadense"}
+   if(Full_data [i,3] == "HEURIC"){Full_data [i,3] <- "GEUCAN"}
+}  
+  
+### Group by and then select the SPP6 with the max cover 
+inner_cover_max_2022 <- Full_data  %>%
+      group_by(Block, Treatment, SPP6, Scientific_Name) %>%
+      summarise(max_cover=max(Percent_Cover))
+
+##### Note I manually checked species that were found in both the datasets (ACHMIL, TRIREP, CORLAN) and confirmed that the code above took the highest cover value for a species seen twice
+
+### Remove VERSPP since it was < than VERARV for all the same locations
+inner_cover_max_2022 <- subset(inner_cover_max_2022, SPP6 != "VERSPP")
+### Remove Bare
+inner_cover_max_2022 <- subset(inner_cover_max_2022, SPP6 != "BARE")
+### Remove Litter
+inner_cover_max_2022 <- subset(inner_cover_max_2022, SPP6 != "LITTER")
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#Checking again to make sure all the SPP6 levels are correct (no misspellings or weirdness)
+sort(unique(inner_cover_max_2022$SPP6))
+
+#Checking again to make sure all the scientific names are correct (no misspellings or weirdness)
+sort(unique(inner_cover_max_2022$Scientific_Name))
+
+
+### Saw at least 73 different species in 2022
+### Number of scientific names = number of SPP6 codes (yay :) )
+
+#View(inner_cover_max_2022)
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+
+### Missouri C Values
+
+
+### c values and provenance list for Missouri species
+#### N/A is N = native, A = non-native, G = Genus
+setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
+
+# Read in the dataset with of all the Missouri Flora and associated info
+checklist_Missouri_flora <- read_excel("Checklist of Missouri Flora.xlsx")
+
+# Make the C values a number
+checklist_Missouri_flora$C <- as.numeric(checklist_Missouri_flora$C)
+
+# Change the column names to match how I named my datasets
+checklist_Missouri_flora <- checklist_Missouri_flora %>% 
+  rename(SPP6 = ACRON) %>% 
+  rename(Scientific_Name = `SCIENTIFIC NAME`)
+
+# Change the Latin names to lower case so I can join the two datasets later on
+checklist_Missouri_flora$Scientific_Name <- tolower(checklist_Missouri_flora$Scientific_Name)
+
+#### ***Note**** made some decisions here
+####   SPHOBO = SPHOBT and changed the name to match
+####   Changed Solidago canadensis var. hargeri to Solidago canadensis 
+####   Melilotus officinale is not an accepted name and I changed it to M. officinalis
+####   Setaria glauca is not an accepted name and I changed it to Seteria pumila (along with the code)
+####   CONCAC = CONCAN and changed the name to match
+
+
+for(i in 1:nrow(checklist_Missouri_flora)){
+  
+  if(checklist_Missouri_flora[i,4] == "sphenopholis obtusata var. obtusata"){checklist_Missouri_flora[i,4] <- "sphenopholis obtusata"}
+  if(checklist_Missouri_flora[i,1] == "SPHOBO"){checklist_Missouri_flora[i,1] <- "SPHOBT"}
+  if(checklist_Missouri_flora[i,4] == "melilotus officinale"){checklist_Missouri_flora[i,4] <- "melilotus officinalis"}
+  if(checklist_Missouri_flora [i,4] == "conyza canadensis var. canadensis"){checklist_Missouri_flora[i,4] <- "conyza canadensis"}
+  if(checklist_Missouri_flora [i,1] == "CONCAC"){checklist_Missouri_flora[i,1] <- "CONCAC"}
+  if(checklist_Missouri_flora [i,4] == "solidago canadensis var. hargeri"){checklist_Missouri_flora[i,4] <- "solidago canadensis"}
+  if(checklist_Missouri_flora [i,4] == "setaria glauca"){checklist_Missouri_flora[i,4] <- "setaria pumila"}
+  if(checklist_Missouri_flora [i,1] == "SETGLA"){checklist_Missouri_flora[i,1] <- "SETPUM"}
+  
+  
+}  
+  
+```
+
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+### Making a Species List - 2022
+
+
+#### Take inner cover data then group by species (code and scientific name)
+#### Sum by cover to obtain new dataset that contains a list of the species recorded in inner study plots
+
+PE_2022_Species_List <- inner_cover_max_2022 %>% 
+  group_by(SPP6, Scientific_Name) %>% 
+  summarize(Percent_Cover = sum(max_cover))
+
+### Remove the percent cover column to get just a list of species 
+PE_2022_Species_List <- PE_2022_Species_List[, -3]
+
+## Convert all names to lower case for the join
+PE_2022_Species_List$Scientific_Name <- tolower(PE_2022_Species_List$Scientific_Name)
+  
+### Join the missouri flora checklist to my species list
+
+PE_2022_Species_List_Detailed <- left_join(PE_2022_Species_List, checklist_Missouri_flora, by = "Scientific_Name")
+
+### Export to edit in Excel
+setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
+
+#### Made the last species list dataset on December 06, 2022
+#write_xlsx(PE_2022_Species_List_Detailed, "PE_Detailed_Species_List_2022.xlsx")
+
+```
+
+```{r}
+# Make plot level species list
+
+
+Species_Block_Plot_List <- inner_cover_max_2022 %>% 
+  unite("UniqueBlockTreat", Block:Treatment, sep = "_", remove = FALSE) %>% 
+  group_by(Block, Treatment, UniqueBlockTreat, SPP6, Scientific_Name)  %>% 
+  summarize(totcover= sum(max_cover))
+
+
+#write_xlsx(Species_Block_Plot_List, "Species_Block_Plot_List.xlsx")
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#Import cleaned species list to join with the original inner dataset
+#### Last cleaned the dataset on December 06, 2022
+setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
+
+
+Species_List_PE_2022 <- read_excel("Cleaned_PE_Detailed_Species_List_2022.xlsx")
+
+#Remove unnecessary columns
+Species_List_Reduced_PE_2022 <- Species_List_PE_2022 [, 1:4]
+Species_List_Reduced_PE_2022 <- Species_List_Reduced_PE_2022 %>% 
+  rename(SPP6 = SPP6.x)
+
+#Join to inner dataset
+joined_inner_cover_2022 <- full_join(inner_cover_max_2022, Species_List_Reduced_PE_2022, by = "SPP6" )
+
+#Remove extra name column
+joined_inner_cover_2022 <- joined_inner_cover_2022[,-6]
+
+#Rename the Scientific_Name column
+joined_inner_cover_2022 <- joined_inner_cover_2022 %>% 
+  rename(Scientific_Name = Scientific_Name.x)
+
+#Check 
+#view(joined_inner_cover_2022)
+
+# END OF DATA CLEANING
+
+```
+
+
+# Exploratory Analysis of Diversity
+
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+### Making a summary table of diversity indices between treatments
+
+#Make a unique identifier for every block and treatment
+joined_inner_cover_2022$UniqueBlock <- paste(joined_inner_cover_2022$Treatment, joined_inner_cover_2022$Block, sep="_")
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#Export this cleaned 2022 data set as an excel file so I can use it for combined analyses with the 2021 data
+## Last exported December 7th, 2022
+setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
+#write_xlsx(joined_inner_cover_2022, "joined_inner_cover_2022.xlsx")
+
+```
+
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+
+### Making a community matrix
+
+
+#Make a reduced dataset
+joined_inner_cover_2022_reduced <- joined_inner_cover_2022[, c(3,5,8)]
+
+joined_inner_cover_2022_reduced <- joined_inner_cover_2022_reduced %>% 
+  group_by(UniqueBlock, SPP6) %>% 
+  summarise(max_cover = sum(max_cover))
+
+
+#Make a wide formatted dataset
+inner_wide <- joined_inner_cover_2022_reduced  %>% 
+  spread(key="SPP6", value="max_cover") 
+
+#Replace NA values with 0
+
+inner_wide[is.na(inner_wide)] <- 0 
+
+#Make a separate dataframe for the labels
+inner_wide.labs <- inner_wide[, 1]
+
+#Turn our dataset into a matrix 
+inner_wide_mat <- inner_wide[,-1]
+
+row.names(inner_wide_mat) <- inner_wide.labs$UniqueBlock
+inner_wide_mat <- data.matrix(inner_wide_mat)
+
+
+#Double check your work using the View() function. 
+
+#View(inner_wide_mat)
+
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+# Species richness
+
+
+Species_richness <- specnumber(inner_wide_mat[,-1])
+Species_richness
+
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+
+# Shannon's Diversity
+
+#Calculate Shannon's Diversity
+Shannon <- diversity(inner_wide_mat, index="shannon")
+
+Shannon
+
+```
+
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+# Mean C
+
+
+# Make a dataset that has each treatment, the species found in that treatment, and their associated C values
+
+C_hist <- joined_inner_cover_2022  %>% 
+                  filter( Provenance %in% "N") %>% 
+                  group_by(Treatment, SPP6, C) %>% 
+            summarize(tot.cover = sum(max_cover)) %>% 
+            select(-c(tot.cover))
+```
+
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+# Calculate mean C for each Treatment in a Block
+### Remember you have to filter out anything that isn't native!
+Mean_C_2022 <- joined_inner_cover_2022  %>% 
+                  filter( Provenance %in% "N") %>% 
+                  group_by(UniqueBlock, Treatment, Block) %>% 
+                  summarize(Mean_C = mean(C))
+```
+
+
+### Summary Table of Diversity Indices
+
+```{r, r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+Summary_table_2022 <- data.frame(inner_wide.labs$UniqueBlock, Mean_C_2022$Treatment, Mean_C_2022$Block, Species_richness, Shannon, Mean_C_2022$Mean_C)
+
+# Summary table for the Mean C, Species Richness, and Shannon's diversity for each block and treatment combination
+
+Summary_table_2022 <- Summary_table_2022 %>% 
+  rename(UniqueBlock = inner_wide.labs.UniqueBlock, Treatment = Mean_C_2022.Treatment, Block = Mean_C_2022.Block,Mean_C = Mean_C_2022.Mean_C)
+
+### Get rid of the row lables
+rownames(Summary_table_2022) <- NULL
+
+Summary_table_2022
+```
+
+Below is a summary table showing the mean and SD for mean C value (C), species richness (SR), and Shannon diversity index (SDI) for each seeding treatment.
+
+```{r, echo = FALSE, message = FALSE}
+# Summary table for the mean and standard deviation for C values, Species Richness, and Shannon's diversity for each treatment overall
+
+Summary_table_2022_mean <- Summary_table_2022 %>% 
+  group_by(Treatment) %>%   
+  summarise(Mean_C_t = mean(Mean_C), SD_C = sd(Mean_C), mean_richness = mean(Species_richness), SD_richness = sd(Species_richness), mean_Shannon = mean(Shannon), SD_Shannon = sd(Shannon))
+  
+Summary_table_2022_mean <- Summary_table_2022_mean %>% 
+rename(Treatment = Treatment, "C - Mean" = Mean_C_t, "C - SD" = SD_C, "SR - Mean" = mean_richness,"SR - SD" = SD_richness, "SDI - Mean" = mean_Shannon, "SDI - SD" = SD_Shannon )
+
+Summary_table_2022_mean 
+```
+
+### Analyzing diversity
+
+#### Mean C
+
+Distribution of C values for all treatments were right skewed, indicating the majority of native plants in all treatments were of low conservatism value. SIM had the most "even" distribution of C values and almost every value was represented in this treatment. 
+
+```{r, echo = FALSE}
+# Make a histogram showing the distribution of c values in each treatment
+
+C_hist %>% 
+  ggplot(aes(C))+geom_histogram(colour = 1, fill = "white", bins =30) +facet_wrap(~Treatment)+
+  scale_x_continuous(breaks = seq(0, 10, 1))
+
+```
+
+Mean C values were significantly higher in all treatments compared to the NON treatment. 
+
+```{r}
+#Dropped the mixed model due to singular fit -> the variance of the random effect block is estimated close to zero and does not further inform the data. 
+
+Summary_table_2022$Block <- as.factor(Summary_table_2022$Block)
+
+
+Mean_C.mod <- lm(Mean_C~Treatment, data =Summary_table_2022)
+anova(Mean_C.mod)
+mean_C.aov <- aov(Mean_C.mod)
+TukeyHSD(mean_C.aov )
+
+
+
+## 95% confidence intervals 
+
+emmeans::emmeans(Mean_C.mod , "Treatment", type = "response")
+
+## Make a new dataframe to hold the model estimates and 95% confidence interval bounds
+
+response <- c(1.614, 1.909, 1.362, 0.455, 2.301)
+lower <- c(1.15698, 1.45191,  0.90525, -0.00194, 1.84389) 
+upper <- c(2.071, 2.365, 1.819,  0.912, 2.757)
+treatment <- c("LE", "LL", "NAT", "NON", "SIM")
+
+mean.c.est <- data.frame(treatment, response, lower, upper)
+```
+
+
+```{r, results = 'hide', echo = FALSE, message = FALSE, warning = FALSE}
+
+
+Summary_table_2022$Treatment <- factor(Summary_table_2022$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+mean.c.est$treatment <- factor(mean.c.est$treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+```
+
+
+
+```{r, message = FALSE, echo = FALSE, results = 'hide', echo = FALSE, warning = FALSE}
+
+# scatterplot with 95% confidence intervals
+
+mean_c.jitter.plot <- ggplot()+
+  geom_jitter(data=Summary_table_2022, aes(x=Treatment, y=Mean_C, color = Treatment), show.legend = FALSE, width = .2, size = 2.5) +
+    geom_point(data = mean.c.est, aes(x=treatment, y=response), show.legend = FALSE, size = 3.5)+
+  geom_errorbar(data = mean.c.est, aes(x= treatment, y = response, ymin = lower, ymax = upper), width = 0.15, cex = 0.75)+
+  theme_classic()+
+  xlab(" ")+
+  ylim(-.1, 4)+
+  ylab("Mean C")+
+  scale_color_manual(name = "Site", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"), breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
+ theme(text=element_text(size=16), legend.key.size=unit(1, "cm"))+
+ scale_x_discrete(labels = c ("NON" = "No Seeding", "NAT" = "Natural", "LE" = "Early First", "LL" = "Late First", "SIM" = "Simultaneous"), guide = guide_axis(angle = 45))+
+  theme_classic() +
+ theme(text=element_text(size=16), legend.key.size=unit(1, "cm"))
+
+mean_c.jitter.plot
+
+```
+
+
+#### Species Richness
+
+
+SIM treatments had the greatest species richness compared to all other treatments, while NON and NAT had the lowest. 
+
+```{r}
+
+#Dropped the mixed model due to singular fit -> the variance of the random effect block is estimated close to zero and does not further inform the data. 
+
+SR.mod <- glm(Species_richness~Treatment,family = "poisson", data =Summary_table_2022)
+summary(SR.mod)
+
+
+## 95% confidence intervals 
+
+est.poi <- emmeans::emmeans(SR.mod , "Treatment", type = "response")
+est.poi 
+
+#Posthoc test
+pairs(est.poi)
+
+## Make a new dataframe to hold the model estimates and 95% confidence interval bounds
+
+response <- c(15.0, 17.7, 19.8, 21.0, 24.5)
+lower <- c(12.2, 14.6,  16.6, 17.6, 20.8) 
+upper <- c(18.4, 21.4, 23.7,  25.0, 28.8)
+treatment <- c("NON", "NAT", "LE", "LL", "SIM")
+
+sr.est <- data.frame(treatment, response, lower, upper)
+```
+
+
+```{r}
+SR.jitter.plot <- ggplot()+
+  geom_jitter(data=Summary_table_2022, aes(x=Treatment, y=Species_richness, color = Treatment), show.legend = FALSE, width = .2, size = 2.5) +
+    geom_point(data = sr.est, aes(x=treatment, y=response), show.legend = FALSE, size = 3.5)+
+  geom_errorbar(data = sr.est, aes(x= treatment, y = response, ymin = lower, ymax = upper), width = 0.15, cex = 0.75)+
+  theme_classic()+
+  xlab("")+
+  ylim(6,32)+
+  ylab("Species Richness")+
+  scale_color_manual(name = "Site", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"), breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
+scale_x_discrete(labels = c ("NON" = "No Seeding", "NAT" = "Natural", "LE" = "Early First", "LL" = "Late First", "SIM" = "Simultaneous"), guide = guide_axis(angle = 45))+
+  theme_classic() +
+   theme(text=element_text(size=16), legend.key.size=unit(1, "cm"))
+
+SR.jitter.plot
+
+```
+
+
+
+
+#### Shannon Diversity Index
+
+SIM and LL treatments had the greatest Shannon diversity index value while NON had the lowest. NAT and LE appear comparable. 
+
+
+```{r}
+Shannon.lmer.mod <- lmer(Shannon~Treatment+(1|Block), data =Summary_table_2022)
+summary(Shannon.lmer.mod)
+anova(Shannon.lmer.mod, ddf="Kenward-Roger")
+pairs(emmeans::emmeans(Shannon.lmer.mod, "Treatment"))
+
+## 95% confidence intervals 
+
+emmeans::emmeans(Shannon.lmer.mod, "Treatment", type = "response")
+
+
+## Make a new dataframe to hold the model estimates and 95% confidence interval bounds
+
+response <- c(1.83, 2.02, 2.08, 2.22, 2.20)
+lower <- c(1.65, 1.83,  1.90, 2.04, 2.01) 
+upper <- c(2.02, 2.20, 2.26,  2.41, 2.38)
+treatment <- c("NON", "NAT", "LE", "LL", "SIM")
+
+Shannon.est <- data.frame(treatment, response, lower, upper)
+
+
+library(MuMIn)
+r.squaredGLMM(Shannon.lmer.mod)
+```
+
+
+```{r}
+Shannon.jitter.plot <- ggplot()+
+  geom_jitter(data=Summary_table_2022, aes(x=Treatment, y=Shannon, color = Treatment), show.legend = FALSE, width = .2, size = 2.5) +
+    geom_point(data = Shannon.est, aes(x=treatment, y=response), show.legend = FALSE, size = 3.5)+
+  geom_errorbar(data = Shannon.est, aes(x= treatment, y = response, ymin = lower, ymax = upper), width = 0.15, cex = 0.75)+
+  theme_classic()+
+  xlab("")+
+  ylim(1.5,2.75)+
+  ylab("Shannon Diversity Index")+
+  scale_color_manual(name = "Site", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"), breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
+ scale_x_discrete(labels = c ("NON" = "No Seeding", "NAT" = "Natural", "LE" = "Early First", "LL" = "Late First", "SIM" = "Simultaneous"), guide = guide_axis(angle = 45))+
+  theme_classic() +
+theme(text=element_text(size=16), legend.key.size=unit(1, "cm"))
+
+Shannon.jitter.plot
+
+```
+
+
+```{r}
+plot_grid(
+  NULL, mean_c.jitter.plot, SR.jitter.plot, Shannon.jitter.plot, ncol = 2
+)
+
+
+
+```
+
+## Comparing seeded cover (in the inner 1 m^2 sampling area) for each treatment 
+
+
+**note** some of the species used in the seed mix were present in the seed bank at my study site (e.g., RUDHIR and PENDIG). Additionally, some spillover occurred with seeded species seeding into other treatments like NON (e.g., BIDARI)
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+#inner_wide is the community matrix
+#inner_wide.labs has the labels
+
+inner_long <- inner_wide %>% 
+  gather(key = "SPP6", value = "max_cover", ACAVIR:VIOPED) %>% 
+  separate(UniqueBlock, c("Treatment", "Block"), "_")
+
+
+inner_long$UniqueBlock <- paste(inner_long$Treatment, inner_long$Block, sep="_")
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+Seeded <- inner_long  %>% 
+  filter(Treatment %in% c("LE", "NAT", "LL", "SIM", "NON")) %>% 
+  filter(SPP6 %in% c("ACHMIL","CORLAN", "LOBSPI","TRAOHI", "LINSUL", "CORPAL", "AMOCAN", "DALCAN", "DALPUR", "SPHOBT", "CARBUS", "KOEMAC",  "HEURIC", "VIOPED", "SISCAM", "DODMEA", "MELVIR", "PACPLA", "LESCAP","MONFIS", "BIDARI","SORNUT", "SCHSCO", "HYPPUN", "SPOHET", "HELMOL", "RATPIN", "SOLRIG", "PENDIG", "CHAFAS",  "ERYYUC", "CORTRI", "PYCTEN", "CROSAG", "RUDHIR", "LIAPYC"))
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#Sum the total cover per treatment.block 
+Seeded_Tot <- Seeded %>% 
+  group_by(Treatment, Block) %>% 
+  summarise(tot_cover = sum(max_cover))
+
+
+#Take the mean cover for each treatment
+Seeded_Mean <- Seeded_Tot %>% 
+  group_by(Treatment) %>% 
+  summarise(Mean_cover = mean(tot_cover), SD = sd(tot_cover))
+
+```
+
+
+
+```{r}
+# Testing for difference in total seeded cover
+
+# Block as a random effect had an estimated variance of 0 and standard error of 0 so was dropped from the model (mixed model and linear regression produced the same results).
+
+total.cover.mod <- lm(tot_cover ~ Treatment, data= Seeded_Tot)
+summary(total.cover.mod)
+anova(total.cover.mod)
+total.cover.aov <- aov(total.cover.mod)
+TukeyHSD(total.cover.aov)
+
+
+
+## 95% confidence intervals 
+
+emmeans::emmeans(total.cover.mod , "Treatment", type = "response")
+
+## Make a new dataframe to hold the model estimates and 95% confidence interval bounds
+
+response <- c(23.0, 73.8, 15.7, 5.0, 76.21)
+lower <- c(7.765, 58.482,  0.432, -10.268, 60.948) 
+upper <- c(38.3, 89.0, 31.0,  20.3, 91.5)
+treatment <- c("LE", "LL", "NAT", "NON", "SIM")
+
+
+total.cover.est <- data.frame(treatment, response, lower, upper)
+
+```
+
+### Total Seeded Cover
+
+```{r, echo = FALSE}
+
+#Re-order the levels
+Seeded_Mean$Treatment <- factor(Seeded_Mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+ggplot(data = Seeded_Mean, aes(x = reorder(Treatment, Mean_cover, na.rm = TRUE),  y = Mean_cover, fill = Treatment))+
+  geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend = FALSE)+
+  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Treatment, ymax=Mean_cover+SD, ymin = Mean_cover))+
+  scale_fill_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
+  scale_x_discrete(labels = c ("NON" = "No Seeding", "NAT" = "Natural", "LE" = "Early First", "LL" = "Late First", "SIM" = "Simultaneous"), guide = guide_axis(angle = 45))+
+  labs(x = "", y = "Mean cover of seeded species (%)")+
+  theme_minimal()+
+  theme()+ 
+  scale_y_continuous(breaks=seq(0,120,by=40), limits = c(0,120))+
+  theme_classic() +
+  theme(text=element_text(size=15))
+
+
+
+```
+
+
+```{r, message = FALSE, echo = FALSE, results = 'hide', echo = FALSE, warning = FALSE}
+
+# scatterplot with 95% confidence intervals
+
+#Re-order the levels
+Seeded_Tot$Treatment <- factor(Seeded_Tot$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+mean_c.jitter.plot <- ggplot()+
+  geom_jitter(data=Seeded_Tot, aes(x=Treatment, y=tot_cover, color = Treatment), show.legend = FALSE, width = .2, size = 2.5) +
+    geom_point(data = total.cover.est, aes(x=treatment, y=response), show.legend = FALSE, size = 3.5)+
+  geom_errorbar(data = total.cover.est, aes(x= treatment, y = response, ymin = lower, ymax = upper), width = 0.15, cex = 0.75)+
+  theme_classic()+
+  xlab(" ")+
+  ylab("Seeded species cover (%)")+
+  ylim(-13, 110)+
+  scale_color_manual(name = "Site", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"), breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
+ theme(text=element_text(size=16), legend.key.size=unit(1, "cm"))+
+  scale_y_continuous(breaks=seq(0,100,by=20))
+
+mean_c.jitter.plot
+
+```
+
+
+
+### Spring/Summer dispersing species only
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+Seeded_early <- inner_long  %>% 
+  filter(Treatment %in% c("LE", "NAT", "SIM", "NON", "LL")) %>% 
+  filter(SPP6 %in% c("ACHMIL","CORLAN", "LOBSPI","TRAOHI", "LINSUL", "CORPAL", "AMOCAN", "DALCAN", "DALPUR", "SPHOBT", "CARBUS", "KOEMAC",  "HEURIC", "VIOPED", "SISCAM", "DODMEA", "MELVIR", "PACPLA"))
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+Seeded_early_Mean <- Seeded_early %>% 
+  group_by(Treatment, SPP6) %>% 
+  summarise(Mean_cover = mean(max_cover), SD = sd(max_cover))
+```
+
+```{r, echo = FALSE}
+
+#Re-order the levels
+Seeded_early_Mean$Treatment <- factor(Seeded_early_Mean$Treatment, levels=c("NON", "LL", "NAT", "SIM", "LE"))
+
+ggplot(data = Seeded_early_Mean, aes(x = reorder(SPP6, Mean_cover, na.rm = TRUE),  y = Mean_cover, fill = Treatment))+
+  geom_bar(position = position_dodge2(preserve = "single"), stat = "identity", color = "black")+
+  geom_errorbar(position =  position_dodge2(width = 0.9, preserve = "single"), aes(x = SPP6, ymin = Mean_cover, ymax=Mean_cover+SD))+
+  scale_fill_manual(name = "Treatment", values=c("#E69F00","#56B4E9" ,"#F0E442", "#0072B2", "#009E73"))+
+  labs(x = "Seeded early-dispersing species", y = "Mean Cover (%)")+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 45))+ 
+  scale_y_continuous(breaks=seq(0,100,by=20), limits = c(0,80))
+
+
+```
+
+
+
+```{r}
+Seeded_early_all <- Seeded_early %>% 
+  group_by(Treatment, Block) %>% 
+  summarise(Tot_Cover = sum(max_cover))
+
+Seeded <- inner_long  %>% 
+  filter(Treatment %in% c("LE", "NAT", "LL", "SIM", "NON")) %>% 
+  filter(SPP6 %in% c("ACHMIL","CORLAN", "LOBSPI","TRAOHI", "LINSUL", "CORPAL", "AMOCAN", "DALCAN", "DALPUR", "SPHOBT", "CARBUS", "KOEMAC",  "HEURIC", "VIOPED", "SISCAM", "DODMEA", "MELVIR", "PACPLA", "LESCAP","MONFIS", "BIDARI","SORNUT", "SCHSCO", "HYPPUN", "SPOHET", "HELMOL", "RATPIN", "SOLRIG", "PENDIG", "CHAFAS",  "ERYYUC", "CORTRI", "PYCTEN", "CROSAG", "RUDHIR", "LIAPYC"))
+
+
+Seeded_early_all_mean <- Seeded_early_all %>% 
+  group_by(Treatment) %>% 
+  summarise(Mean_cover = mean(Tot_Cover), SD = sd(Tot_Cover )) 
+```
+
+
+```{r}
+# Testing for difference in early seeded cover
+
+# Block as a random effect had an estimated variance of 0 and standard error of 0 so was dropped from the model (mixed model and linear regression produced the same results).
+
+early.cover.mod <- lmer(Tot_Cover ~ Treatment+(1|Block), data= Seeded_early_all)
+
+summary(early.cover.mod)
+anova(early.cover.mod, ddf="Kenward-Roger")
+pairs(emmeans::emmeans(early.cover.mod, "Treatment"))
+
+## 95% confidence intervals 
+
+emmeans::emmeans(early.cover.mod, "Treatment", type = "response")
+
+
+## Make a new dataframe to hold the model estimates and 95% confidence interval bounds
+
+response <- c(8.200, 0.333, 1.267, 0, 9.117)
+lower <- c(3.26, -4.61, -3.68, 0, 4.17) 
+upper <- c(13.14, 5.28, 6.21, 0, 14.06)
+treatment <- c("LE", "LL", "NAT", "NON", "SIM")
+
+
+early.cover.est <- data.frame(treatment, response, lower, upper)
+
+
+```
+
+
+```{r, message = FALSE, echo = FALSE, results = 'hide', echo = FALSE, warning = FALSE}
+
+# scatterplot with 95% confidence intervals
+
+#Re-order the levels
+Seeded_early_all$Treatment <- factor(Seeded_early_all$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+mean_c.jitter.plot <- ggplot()+
+  geom_jitter(data=Seeded_early_all, aes(x=Treatment, y=Tot_Cover, color = Treatment), show.legend = FALSE, width = .2, size = 2.5) +
+    geom_point(data = early.cover.est, aes(x=treatment, y=response), show.legend = FALSE, size = 3.5)+
+  geom_errorbar(data = early.cover.est, aes(x= treatment, y = response, ymin = lower, ymax = upper), width = 0.15, cex = 0.75)+
+  theme_classic()+
+  xlab(" ")+
+  ylab("Cover of seeded early dispersing species (%)")+
+  scale_color_manual(name = "Site", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"), breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
+ theme(text=element_text(size=16), legend.key.size=unit(1, "cm"))
+
+mean_c.jitter.plot
+
+```
+
+```{r}
+#Re-order the levels
+Seeded_early_all_mean$Treatment <- factor(Seeded_early_all_mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+ggplot(data = Seeded_early_all_mean, aes(x = Treatment,  y = Mean_cover, fill = Treatment))+
+  geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", , show.legend = FALSE)+
+  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Treatment, ymax=Mean_cover+SD, ymin = Mean_cover))+
+  scale_fill_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
+  labs(x = "", y = "Mean cover of early dispersing species (%)")+
+  theme_minimal()+
+  theme(axis.text=element_text(size=12), axis.title = element_text(size = 12))+
+  scale_y_continuous(breaks=seq(0,25,by=5), limits = c(0,25))+
+  labs(tag = "A)")+
+  theme(legend.position = "none")+
+  scale_x_discrete(labels = c ("NON" = "No Seeding", "NAT" = "Natural", "LE" = "Early First", "LL" = "Late First", "SIM" = "Simultaneous"), guide = guide_axis(angle = 45))+
+  labs(x = "", y = "Early season mean cover (%)")+
+  theme_minimal()+
+  theme()+ 
+  theme_classic() +
+  theme(text=element_text(size=14))
+  
+```
+
+```{r}
+#Re-order the levels
+Seeded_early_all_mean$Treatment <- factor(Seeded_early_all_mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+fig1 <- ggplot(data = Seeded_early_all_mean, aes(x = Treatment,  y = Mean_cover, fill = Treatment))+
+  geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", , show.legend = FALSE)+
+  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Treatment, ymax=Mean_cover+SD, ymin = Mean_cover))+
+  scale_fill_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
+  labs(x = "", y = "Mean cover of early dispersing species (%)")+
+  theme_minimal()+
+  theme(axis.text=element_text(size=12), axis.title = element_text(size = 12))+
+  scale_y_continuous(breaks=seq(0,120,by=20), limits = c(0,120))+
+  labs(tag = "A)")+
+  theme(legend.position = "none")+
+  scale_x_discrete(labels = c ("NON" = "No Seeding", "NAT" = "Natural", "LE" = "Early First", "LL" = "Late First", "SIM" = "Simultaneous"), guide = guide_axis(angle = 45))+
+  labs(x = "", y = "Early season mean cover (%)")+
+  theme_minimal()+
+  theme()+ 
+  theme_classic() +
+  theme(text=element_text(size=14))
+  
+```
+
+### Fall dispersing species only
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+Seeded_late <- inner_long  %>% 
+  filter(Treatment %in% c("LE", "NAT", "LL", "SIM", "NON")) %>% 
+  filter(SPP6 %in% c("LESCAP","MONFIS", "BIDARI","SORNUT", "SCHSCO", "HYPPUN", "SPOHET", "HELMOL", "RATPIN", "SOLRIG", "PENDIG", "CHAFAS",  "ERYYUC", "CORTRI", "PYCTEN", "CROSAG", "RUDHIR", "LIAPYC"))
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+Seeded_late_Mean <- Seeded_late %>% 
+  group_by(Treatment, SPP6) %>% 
+  summarise(Mean_cover = mean(max_cover), SD = sd(max_cover)) 
+```
+
+
+
+```{r, echo = FALSE}
+
+Seeded_late_Mean$Treatment <- factor(Seeded_late_Mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+ggplot(data = Seeded_late_Mean, aes(x = reorder(SPP6, Mean_cover, na.rm = TRUE),  y = Mean_cover, fill = Treatment))+
+  geom_bar(position = position_dodge2(preserve = "single"), stat = "identity", color = "black")+
+  geom_errorbar(position =  position_dodge2(width = 0.9, preserve = "single"), aes(x = SPP6, ymin = Mean_cover, ymax=Mean_cover+SD))+
+  scale_fill_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
+  labs(x = "Seeded late-dispersing species", y = "Mean Cover (%)")+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 45))+
+   scale_y_continuous(breaks=seq(0,100,by=20), limits = c(0,80))
+```
+
+```{r}
+Seeded_late_all <- Seeded_late %>% 
+  group_by(Treatment, Block) %>% 
+  summarise(Tot_Cover = sum(max_cover)) 
+
+
+Seeded_late_all_mean <- Seeded_late_all %>% 
+  group_by(Treatment) %>% 
+  summarise(Mean_cover = mean(Tot_Cover ), SD = sd(Tot_Cover )) 
+```
+
+
+```{r}
+# Testing for difference in late seeded cover
+
+# Block as a random effect had an estimated variance of 0 and standard error of 0 so was dropped from the model (mixed model and linear regression produced the same results).
+
+late.cover.mod <- lm(Tot_Cover~ Treatment, data= Seeded_late_all)
+
+summary(late.cover.mod)
+anova(late.cover.mod)
+mean_C.aov <- aov(late.cover.mod)
+TukeyHSD(mean_C.aov)
+
+
+## 95% confidence intervals 
+
+emmeans::emmeans(late.cover.mod, "Treatment", type = "response")
+
+
+## Make a new dataframe to hold the model estimates and 95% confidence interval bounds
+
+response <- c(14.8, 73.4, 14.4, 5.0, 67.1)
+lower <- c(-1.12, 57.46,  -1.52, -10.96, 51.14) 
+upper <- c(30.8, 89.4, 30.4,  21.0, 83.1)
+treatment <- c("LE", "LL", "NAT", "NON", "SIM")
+
+
+late.cover.est <- data.frame(treatment, response, lower, upper)
+
+```
+
+```{r}
+#Re-order the levels
+Seeded_late_all_mean$Treatment <- factor(Seeded_late_all_mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+fig2 <- ggplot(data = Seeded_late_all_mean, aes(x = Treatment,  y = Mean_cover, fill = Treatment))+
+  geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", , show.legend = FALSE)+
+  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Treatment, ymax=Mean_cover+SD, ymin = Mean_cover))+
+  scale_fill_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
+  labs(x = "", y = "Mean cover of late dispersing species (%)")+
+  theme_minimal()+
+  theme(axis.text=element_text(size=12), axis.title = element_text(size = 12))+
+  scale_y_continuous(breaks=seq(0,120,by=20), limits = c(0,110))+
+              labs(tag = "B)")+
+  theme(legend.position = "none")+
+    scale_x_discrete(labels = c ("NON" = "No Seeding", "NAT" = "Natural", "LE" = "Early First", "LL" = "Late First", "SIM" = "Simultaneous"), guide = guide_axis(angle = 45))+
+  labs(x = "", y = "Late season mean cover (%)")+
+  theme_minimal()+
+  theme()+ 
+  theme_classic() +
+  theme(text=element_text(size=14))
+
+fig2
+```
+
+```{r}
+Test1 <- cowplot::plot_grid(fig1, fig2,
+                       nrow = 1,
+                       rel_widths = c(2,2,2))
+
+Test1
+```
+# Community Analysis 
+
+## NMDS Ordination
+
+Below is a plot showing the stress at various dimensions using Bray-Curtis dissimilarity. It appears that stress is far too high to use 2 dimensions. However, 3 dimensions had a low enough stress value that we can use (stress = 0.17). Furthermore, the model was able to successfully converge on the same best solution multiple times. 
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+# Standardize by max 
+
+inner.max <- decostand(inner_wide_mat, "max")
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+# Check the stress at various dimensions using bray-curtis dissimilarity
+## stress = 0.1718204 in 3 dimensions
+## Stress was far too high in 2 dimensions - 
+
+fig <- dimcheckMDS(inner.max, distance = "bray", k=6, trymax= 20, autotransform = FALSE)
+```
+```{r, echo = FALSE}
+fig
+```
+
+````{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#metaMDS for maximum standardization
+#best solution converged several times at 3 dimensions
+
+inner.cover.mds <- metaMDS(inner.max, distance = "bray", autotransform = FALSE, trymax =50, k =3)
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#### Take the full inner cover dataset and only keep the labels (year, block, treatment, ID)
+#### This will be useful in grouping points in the NMDS and running the PERMANOVA latter on
+
+
+joined_inner_cover_2022_data <- joined_inner_cover_2022 %>% 
+  group_by(UniqueBlock, Block, Treatment) %>% 
+  summarise(Percent_Cover = sum(max_cover)) %>% 
+  select(-Percent_Cover)
+
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+### Looks at which species were the most influential in driving the observed patterns
+inner.spp.fit <- envfit(inner.cover.mds, inner.max, permutations = 999, k =3)
+#head(inner.spp.fit)
+```
+
+From the NMDS plot below, fast emerging annual species drove a lot of the species composition in the SIM and LL treatments (CHAFAS, BIDARI). Other fall dispersing species such as SORNUT, CORTRI, and RATPIN were also strongly associated with the SIM and LL treatments. Weedy non-native grasses like BROJAP and HORPUS were not associated together. Does this suggest that plots with lots of BROJAP had little HORPUS and vice versa? Sadly, TRIREP (which I seeded in the alleys) was strongly associated with the LE, NON, and NAT treatments. Perhaps this suggests that these treatments were more vulnerable to invasion than the SIM and LL treatments, which were able to garner more seeded cover via fast growing annuals like CHAFAS and BIDARI. Note that only the species with a p value < 0.01 are shown. 
+
+```{r, echo = FALSE}
+
+# Plot the NMDS
+plot(inner.cover.mds, type = "n")
+
+### Plots the species fits
+### Note I need to figure out how to jitter the labels so they don't overlap
+plot(inner.spp.fit, p.max = 0.01, col = "black", cex = 0.7)
+
+### Plots the points and gives a unique shape based on year and unique color based on treatment
+points(inner.cover.mds, display = "sites", pch = c(21, 22, 23, 24, 25) [as.factor(joined_inner_cover_2022_data$Treatment)], bg = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2") [as.factor(joined_inner_cover_2022_data$Treatment)],  cex =1)
+
+### Legend so I can know what shapes and colors correspond to which groups
+legend("topright", legend = c("LE", "LL", "NAT", "NON", "SIM"),  pch = c(21, 22, 23, 24, 25), pt.bg = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"), bty = "n", cex = 1)  
+
+### Displays the type of standardization, Stress, and Dimensions used
+legend("topleft", c("Max Standardization", "Stress = 0.17", "k = 3"), bty = "n", cex = 1)
+
+```
+
+In the 3D plot, there was substantial overlap between the NAT, NON, and LE treatments and minimal overlap between the SIM and LL treatments and LE and NAT treatments. LL and SIM also were overlapped. Overall, this suggests that NON, NAT, and LE treatments contained similar plant communities and SIM and LL contained similar plant communities. 
+
+
+```{r, echo = FALSE}
+
+
+#ordiplot3d(inner.cover.mds)
+pl <- ordiplot3d(inner.cover.mds, scaling = "symmetric", angle = 35, type="n")
+
+### Plots the points and gives a unique shape based on year and unique color based on treatment
+ordiellipse(pl, groups = joined_inner_cover_2022_data$Treatment, label = F, draw = "polygon", lty = 1,col = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"),  conf = 0.95, kind = "se")
+
+# Draws 95% CI around the treatment groups (based on se)
+points(pl,"points", pch = c(21, 22, 23, 24, 25) [as.factor(joined_inner_cover_2022_data$Treatment)], bg = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2") [as.factor(joined_inner_cover_2022_data$Treatment)], cex =1)
+
+
+### Legend so I can know what shapes and colors correspond to which groups
+legend("topright", legend = c("LE", "LL", "NAT", "NON", "SIM"),  pch = c(21, 22, 23, 24, 25), pt.bg = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"), bty = "n", cex = 1) 
+
+### Displays the type of standardization, Stress, and Dimensions used
+legend("topleft", c("Max Standardization", "Stress = 0.17", "K = 3"), bty = "n", cex = 1)
+
+```
+
+
+## PERMANOVA
+
+PERMANOVA analysis revealed that treatment did have a significant effect on plant community composition. Treatment also explained ~ 20% of the variation in the plant community. Post-hoc analysis shows that LE, NON, and NAT treatments were not significantly different from each other but did differ in plant community composition compared to the SIM and LL seeding treatments.  Additionally, the SIM and LL treatments were only marginally different (p = 0.053). Based on the NMDS above, the LL plant community appears as a subset of the SIM plant community. Despite receiving the same pool of seeded species, species added to the plots later in the growing season did not establish as well. Barriers to establishment also appeared higher for spring/summer dispersing species compared to fall dispersing species, particularly when added without priority. 
+
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+
+### PERMANOVA analysis predicting the community based on year and treatment with block as a random effect
+### At least on treatment sig. different from the others
+### Not exactly sure how to specify the strata...? ***Ask Lauren***
+
+adonis2(inner.max ~ Treatment, data=joined_inner_cover_2022_data, method = "bray", permutations=1000)
+
+
+### Treatments
+### LE != LL < 0.001
+### LE != SIM < 0.001
+### LL != NAT < 0.05
+### LL != NON < 0.001
+### NAT != SIM < 0.001
+### NON != SIM < 0.001
+
+
+pairwise.adonis2(inner.max  ~ Treatment, method = "bray", data=joined_inner_cover_2022_data)
+
+```
+
+
+### Weather data
+
+```{r}
+# Precipitation
+
+
+
+month_tot <- weather %>% 
+  filter(Year != "2021") %>% 
+  group_by(Month, Year) %>% 
+  summarize(tot_month_PRP_mm = sum(Total_PRP_mm))
+
+year_tot <- weather %>% 
+  filter(Year != "2021") %>% 
+  group_by(Year) %>% 
+  summarize(tot_PRP_mm = sum(Total_PRP_mm))
+
+library(mosaic)
+
+favstats(year_tot$tot_PRP_mm)
+```
+
+```{r}
+# Average air temperature
+
+
+library(mosaic)
+
+favstats(weather$Average_Air_Temp_C)
+```
+
+
+#### Summer 2023 cover data
+
+```{r}
+
+#Make a reduced dataset
+inner_cover_summer_2023_reduced <- inner_cover_summer_2023[, -c(5,6,7)]
+
+inner_cover_2023_reduced <- inner_cover_summer_2023_reduced  %>% 
+  unite("UniqueBlock", Block:Treatment, sep = "_", remove = FALSE) %>% 
+  group_by(UniqueBlock, SPP6) %>% 
+  summarise(max_cover = sum(Percent_Cover))
+
+
+#Make a wide formatted dataset
+inner_wide_2023 <- inner_cover_2023_reduced   %>% 
+  spread(key="SPP6", value="max_cover") 
+
+#Replace NA values with 0
+
+inner_wide_2023[is.na(inner_wide_2023)] <- 0 
+
+#Make a separate dataframe for the labels
+inner_wide_2023.labs <- inner_wide_2023[, 1]
+
+#Turn our dataset into a matrix 
+inner_wide_2023_mat <- inner_wide_2023[,-1]
+
+row.names(inner_wide_2023_mat) <- inner_wide_2023.labs$UniqueBlock
+inner_wide_2023_mat <- data.matrix(inner_wide_2023_mat)
+
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+#inner_wide is the community matrix
+#inner_wide.labs has the labels
+
+inner_long_2023 <- inner_wide_2023 %>% 
+  gather(key = "SPP6", value = "max_cover", ACHMIL:VIOPED) %>% 
+  separate(UniqueBlock, c("Block", "Treatment"), "_")
+
+
+inner_long_2023$UniqueBlock <- paste(inner_long_2023$Treatment, inner_long_2023$Block, sep="_")
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+Seeded_early_2023 <- inner_long_2023   %>% 
+  filter(Treatment %in% c("LE", "NAT", "SIM", "NON", "LL")) %>% 
+  filter(SPP6 %in% c("ACHMIL","CORLAN", "LOBSPI","TRAOHI", "LINSUL", "CORPAL", "AMOCAN", "DALCAN", "DALPUR", "SPHOBT", "CARBUS", "KOEMAC",  "HEURIC", "VIOPED", "SISCAM", "DODMEA", "MELVIR", "PACPLA"))
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+Seeded_early_2023_Mean <- Seeded_early_2023 %>% 
+  group_by(Treatment, Block) %>% 
+  summarise(Total_cover = sum(max_cover)) %>% 
+  group_by(Treatment) %>% 
+  summarise(Mean_cover = mean(Total_cover), SD = sd(Total_cover))
+```
+
+
+```{r}
+#Re-order the levels
+
+Seeded_early_2023_Mean$Treatment <- factor(Seeded_early_2023_Mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+ggplot(data = 
+Seeded_early_2023_Mean, aes(x = Treatment,  y = Mean_cover, fill = Treatment))+
+  geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black")+
+  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Treatment, ymax=Mean_cover+SD, ymin = Mean_cover))+
+  scale_fill_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
+  labs(x = "", y = "Mean cover of early dispersing species 2023 (%)")+
+  theme_minimal()+
+  theme(axis.text=element_text(size=12), axis.title = element_text(size = 12))+
+  scale_y_continuous(breaks=seq(0,120,by=20), limits = c(0,110))+
+  labs(tag = "A)")+
+  theme(legend.position = "none")
+  
+```
+
+```{r}
+Seeded_early_all_mean$Year <- rep("2022", nrow(Seeded_early_all_mean))
+Seeded_early_2023_Mean$Year <- rep("2023", nrow(Seeded_early_all_mean))
+
+Seeded_early_two_years_mean <- full_join(Seeded_early_all_mean, Seeded_early_2023_Mean)
+
+```
+
+```{r}
+Seeded_early_two_years_mean$Treatment <- factor(Seeded_early_two_years_mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+ggplot(data = 
+Seeded_early_two_years_mean, aes(x = Treatment,  y = Mean_cover, fill = Year))+
+  geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black")+
+  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Treatment, ymax=Mean_cover+SD, ymin = Mean_cover))+
+  scale_fill_manual(name = "Year", values=c("#56B4E9", "#0072B2"))+
+  labs(x = "Treatment", y = "Mean cover of early seeded species (%)")+
+  theme_minimal()+
+  theme(axis.text=element_text(size=12), axis.title = element_text(size = 12))+
+  scale_y_continuous(breaks=seq(0,40,by=10), limits = c(0,40))
+```
+  
