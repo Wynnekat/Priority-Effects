@@ -25,11 +25,11 @@ knitr::opts_chunk$set(echo = TRUE)
 #          3) Checklist of Missouri Flora.xlsx - contains the information about all plants found in MO
 #          4) Cleaned_PE_Detailed_Species_List_2022.xlsx - dataset containing the information about only                                                                plants found in the study
 #         
-#LAST UPDATED: 09 December 2022
+#LAST UPDATED: 06 September 2023
 # PROLOG   ##############################################################################
 ```
 
-#### Treatment information
+## Treatment information & Setup
 
 NON = None (no species seeded)
 
@@ -54,7 +54,8 @@ NAT = Natural; species added according to peak dispersal date
         - November 1st 2021 (PENDIG, ERYYUC, HYPPUN, SORNUT, SCHSCO, LIAPYC)
         - November 19th 2021 (CORTRI, PYCTEN, SOLRIG)
       
-      
+### Load libraries
+
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 ## Libraries
@@ -94,33 +95,84 @@ library(lme4)
 library(lmerTest)
 ```
 
+
+### Import Datasets
+
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 ## Import Datasets
 
-#Working directory that contains datasets
-setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
-
-#Import datasets
-
-## inner (1 m^2) cover for summer 2022
+## inner (1 m^2) cover for Summer
 #### comprehensive vegetative cover (%) for all species in the inner (1 m^2) permanent sampling area. 
 
-inner_cover_summer_2022 <- read_excel("PE_Cover_Inner_Summer_2022_Cleaned.xlsx")
+inner_cover_summer_2022 <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Cover/PE_Cover_Inner_Summer_2022_Cleaned.xlsx")
 
-inner_cover_summer_2023 <- read_excel("PE_Cover_Inner_Summer_2023_Cleaned.xlsx")
+inner_cover_summer_2023 <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Cover/PE_Cover_Inner_Summer_2023_Cleaned.xlsx")
 
-## inner (1 m^2) cover for fall 2022
+## inner (1 m^2) cover for Fall
 #### comprehensive vegetative cover (%) for all species in the inner (1 m^2) permanent sampling area. 
 
-inner_cover_fall_2022 <- read_excel("PE_Cover_Inner_Fall_2022_Cleaned.xlsx")
+
+inner_cover_fall_2021 <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Cover/PE_Cover_Inner_Fall_2021_Cleaned.xlsx")
+
+inner_cover_fall_2022 <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Cover/PE_Cover_Inner_Fall_2022_Cleaned.xlsx")
+
+inner_cover_fall_2023 <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Cover/PE_Cover_Inner_Fall_2023_Cleaned.xlsx")
 
 
 ## Bradford weather
-weather <- read_excel("Bradford_10_Year_Weather.xlsx")
+weather <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Environment/Bradford_10_Year_Weather.xlsx")
+
+
+## Light
+
+light_fall_2022 <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Environment/Priority_Effects_Fall_2022_Light.xlsx")
+
+light_fall_2023 <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Environment/Priority_Effects_Fall_2023_Light.xlsx")
+
+
+## Bare and litter - 2021
+
+bare_cover_2021 <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Cover/PE_Bare_Ground_Cleaned_2021.xlsx")
+
+
+## Species list
+
+species_list_PE <- read_excel("~/Priority-Effects/Priority Effects - Github/Data/Species_List.xlsx")
+```
+
+
+### Dataset cleaning
+
+
+#### 2021 
+
+
+```{r}
+
+### Remove unnecessary columns
+
+#### Get rid of the notes, unknown, and senensced columns
+
+### Fall
+inner_cover_fall_2021 <- inner_cover_fall_2021[,-c(6,7,8)]
+
+
+#### change log
+ # - senesced PLASPP changed to PLAVIR since PLALAN and PLAMAJ do not senesce until Oct.  (Sep 6, 2023)
+ # - JUNSPP changed to JUNINT since JUNINT has been observed in 2022 and 2023 (Sep 6, 2023)
+
+
+### Get rid of EMP
+
+### Fall
+inner_cover_fall_2021 <- subset(inner_cover_fall_2021, Treatment != "EMP")
+
 
 ```
 
+
+#### 2022
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
@@ -133,8 +185,16 @@ weather <- read_excel("Bradford_10_Year_Weather.xlsx")
 #### Summer
 inner_cover_summer_2022 <- inner_cover_summer_2022[,-8]
 
+#### change log
+ # - Fixed IDs: most GALAPA -> GALPED and HEURIC -> GEUCAN (Sep 6, 2023)
+
+
 #### Fall
 inner_cover_fall_2022 <- inner_cover_fall_2022[,-c(8,9,10)]
+
+#### change log
+ # - Fixed IDs: VERSPP -> VERARV since this is the species observed in the summer (Sep 6, 2023)
+
 
 
 ### Get rid of EMP 
@@ -147,194 +207,226 @@ inner_cover_fall_2022 <- subset(inner_cover_fall_2022, Treatment != "EMP")
 ```
 
 
+
+#### 2023
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+## 2023 Inner Cover - Dataset cleaning
+
+### Remove unnecessary columns
+
+### Get rid of the notes, unknown, and sentenced columns
+
+#### Summer
+inner_cover_summer_2023 <- inner_cover_summer_2023[,-c(6,7)]
+
+#### change log
+ # - Fixed IDs: was able to ID ALLSPP as ALLVIN (Sep 6, 2023)
+
+
+#### Fall
+inner_cover_fall_2023 <- inner_cover_fall_2023[,-c(6,7)]
+
+
+### Get rid of EMP 
+
+#### Summer
+inner_cover_summer_2023 <- subset(inner_cover_summer_2023, Treatment != "EMP")
+
+#### Fall
+inner_cover_fall_2023 <- subset(inner_cover_fall_2023, Treatment != "EMP")
+```
+
+
+
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 #Checking to make sure all the SPP6 levels are correct (no misspellings or weirdness)
 
-### Summer
+### Fall 2021
+sort(unique(inner_cover_fall_2021$SPP6))
+
+### Summer 2022
 sort(unique(inner_cover_summer_2022$SPP6))
 
-### Fall
+### Fall 2022
 sort(unique(inner_cover_fall_2022$SPP6))
+
+### Summer 2023
+sort(unique(inner_cover_summer_2023$SPP6))
+
+### Fall 2023
+sort(unique(inner_cover_fall_2023$SPP6))
 
 ### ^ above looks good so far
 
 ```
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r}
+# Make a unique identifier for year and season
 
-### Fully join both datasets together
-Full_data <- full_join(inner_cover_summer_2022,inner_cover_fall_2022)
+### 2021
+
+#### Season
+inner_cover_fall_2021$Season <- rep("Fall", nrow=(inner_cover_fall_2021))
+#### Year
+inner_cover_fall_2021$Year <- rep("2021", nrow=(inner_cover_fall_2021))
 
 
-### Remove season and year
-Full_data <- Full_data[, -c(1,2)]
+### 2022
 
+# Already has the identifiers
+inner_cover_fall_2022$Year <- as.factor(inner_cover_fall_2022$Year)
+inner_cover_summer_2022$Year <- as.factor(inner_cover_summer_2022$Year)
 
-### Lump the Carex for now (*****Ask Lauren about what to do about when the CARSPP > CARFRA or CARBRE?***)
-for(i in 1:nrow(Full_data)){
-  
-  if(Full_data[i,3] == "CARFRA"){Full_data [i,3] <- "CARSPP"}
-  if(Full_data [i,3] == "CARBRE"){Full_data [i,3] <- "CARSPP"}
-  if(Full_data [i,5] == "Carex brevior"){Full_data [i,5] <- "Carex spp."}
-  if(Full_data [i,5] == "Carex frankii"){Full_data [i,5] <- "Carex spp."}
-  if(Full_data [i,5] == "Heuchera richardsonii"){Full_data [i,5] <- "Geum canadense"}
-   if(Full_data [i,3] == "HEURIC"){Full_data [i,3] <- "GEUCAN"}
-}  
-  
-### Group by and then select the SPP6 with the max cover 
-inner_cover_max_2022 <- Full_data  %>%
-      group_by(Block, Treatment, SPP6, Scientific_Name) %>%
-      summarise(max_cover=max(Percent_Cover))
+### 2023
 
-##### Note I manually checked species that were found in both the datasets (ACHMIL, TRIREP, CORLAN) and confirmed that the code above took the highest cover value for a species seen twice
+#### Season
+inner_cover_summer_2023$Season <- rep("Summer", nrow=(inner_cover_summer_2023))
+inner_cover_fall_2023$Season <- rep("Fall", nrow=(inner_cover_fall_2023))
 
-### Remove VERSPP since it was < than VERARV for all the same locations
-inner_cover_max_2022 <- subset(inner_cover_max_2022, SPP6 != "VERSPP")
-### Remove Bare
-inner_cover_max_2022 <- subset(inner_cover_max_2022, SPP6 != "BARE")
-### Remove Litter
-inner_cover_max_2022 <- subset(inner_cover_max_2022, SPP6 != "LITTER")
+#### Year
+inner_cover_fall_2023$Year <- rep("2023", nrow=(inner_cover_fall_2023))
+inner_cover_fall_2023$Year <- as.factor(inner_cover_fall_2023$Year)
+
+inner_cover_summer_2023$Year <- rep("2023", nrow=(inner_cover_summer_2023))
+inner_cover_summer_2023$Year <- as.factor(inner_cover_summer_2023$Year)
 ```
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r}
+# Join years together
 
-#Checking again to make sure all the SPP6 levels are correct (no misspellings or weirdness)
-sort(unique(inner_cover_max_2022$SPP6))
+full_2021_data <- inner_cover_fall_2021
 
-#Checking again to make sure all the scientific names are correct (no misspellings or weirdness)
-sort(unique(inner_cover_max_2022$Scientific_Name))
+full_2022_data <- full_join(inner_cover_summer_2022,inner_cover_fall_2022)
 
-
-### Saw at least 73 different species in 2022
-### Number of scientific names = number of SPP6 codes (yay :) )
-
-#View(inner_cover_max_2022)
-```
+full_2023_data <- full_join(inner_cover_summer_2023,inner_cover_fall_2023)
 
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+# Join all years together
 
+### First 2021 and 2022
+full_21_22_data <- full_join(full_2021_data, full_2022_data)
 
-### Missouri C Values
-
-
-### c values and provenance list for Missouri species
-#### N/A is N = native, A = non-native, G = Genus
-setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
-
-# Read in the dataset with of all the Missouri Flora and associated info
-checklist_Missouri_flora <- read_excel("Checklist of Missouri Flora.xlsx")
-
-# Make the C values a number
-checklist_Missouri_flora$C <- as.numeric(checklist_Missouri_flora$C)
-
-# Change the column names to match how I named my datasets
-checklist_Missouri_flora <- checklist_Missouri_flora %>% 
-  rename(SPP6 = ACRON) %>% 
-  rename(Scientific_Name = `SCIENTIFIC NAME`)
-
-# Change the Latin names to lower case so I can join the two datasets later on
-checklist_Missouri_flora$Scientific_Name <- tolower(checklist_Missouri_flora$Scientific_Name)
-
-#### ***Note**** made some decisions here
-####   SPHOBO = SPHOBT and changed the name to match
-####   Changed Solidago canadensis var. hargeri to Solidago canadensis 
-####   Melilotus officinale is not an accepted name and I changed it to M. officinalis
-####   Setaria glauca is not an accepted name and I changed it to Seteria pumila (along with the code)
-####   CONCAC = CONCAN and changed the name to match
-
-
-for(i in 1:nrow(checklist_Missouri_flora)){
-  
-  if(checklist_Missouri_flora[i,4] == "sphenopholis obtusata var. obtusata"){checklist_Missouri_flora[i,4] <- "sphenopholis obtusata"}
-  if(checklist_Missouri_flora[i,1] == "SPHOBO"){checklist_Missouri_flora[i,1] <- "SPHOBT"}
-  if(checklist_Missouri_flora[i,4] == "melilotus officinale"){checklist_Missouri_flora[i,4] <- "melilotus officinalis"}
-  if(checklist_Missouri_flora [i,4] == "conyza canadensis var. canadensis"){checklist_Missouri_flora[i,4] <- "conyza canadensis"}
-  if(checklist_Missouri_flora [i,1] == "CONCAC"){checklist_Missouri_flora[i,1] <- "CONCAC"}
-  if(checklist_Missouri_flora [i,4] == "solidago canadensis var. hargeri"){checklist_Missouri_flora[i,4] <- "solidago canadensis"}
-  if(checklist_Missouri_flora [i,4] == "setaria glauca"){checklist_Missouri_flora[i,4] <- "setaria pumila"}
-  if(checklist_Missouri_flora [i,1] == "SETGLA"){checklist_Missouri_flora[i,1] <- "SETPUM"}
-  
-  
-}  
-  
-```
-
-
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-### Making a Species List - 2022
-
-
-#### Take inner cover data then group by species (code and scientific name)
-#### Sum by cover to obtain new dataset that contains a list of the species recorded in inner study plots
-
-PE_2022_Species_List <- inner_cover_max_2022 %>% 
-  group_by(SPP6, Scientific_Name) %>% 
-  summarize(Percent_Cover = sum(max_cover))
-
-### Remove the percent cover column to get just a list of species 
-PE_2022_Species_List <- PE_2022_Species_List[, -3]
-
-## Convert all names to lower case for the join
-PE_2022_Species_List$Scientific_Name <- tolower(PE_2022_Species_List$Scientific_Name)
-  
-### Join the missouri flora checklist to my species list
-
-PE_2022_Species_List_Detailed <- left_join(PE_2022_Species_List, checklist_Missouri_flora, by = "Scientific_Name")
-
-### Export to edit in Excel
-setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
-
-#### Made the last species list dataset on December 06, 2022
-#write_xlsx(PE_2022_Species_List_Detailed, "PE_Detailed_Species_List_2022.xlsx")
+### Then 2021 and 2022 with 2023
+full_year_data <- full_join(full_21_22_data, full_2023_data)
 
 ```
 
 ```{r}
-# Make plot level species list
+# lump certain taxa together 
 
+### Lump the Carex for now (*****Ask Lauren about what to do about when the CARSPP > CARFRA or CARBRE?***)
 
-Species_Block_Plot_List <- inner_cover_max_2022 %>% 
-  unite("UniqueBlockTreat", Block:Treatment, sep = "_", remove = FALSE) %>% 
-  group_by(Block, Treatment, UniqueBlockTreat, SPP6, Scientific_Name)  %>% 
-  summarize(totcover= sum(max_cover))
+## MELOFF + MELALB -> MELSPP
+## LEPVIR -> LEPSPP
+## CARFRA -> CARSPP
+## CARBRE -> CARSPP
 
+for(i in 1:nrow(full_year_data)) {
+  if(full_year_data[i,3] == "CARFRA"){full_year_data [i,3] <- "CARSPP"}
+  if(full_year_data[i,3] == "CARBRE"){full_year_data [i,3] <- "CARSPP"}
+  if(full_year_data[i,3] == "MELOFF"){full_year_data [i,3] <- "MELSPP"}
+  if(full_year_data[i,3] == "MELALB"){full_year_data [i,3] <- "MELSPP"}
+  if(full_year_data[i,3] == "LEPVIR"){full_year_data [i,3] <- "LEPSPP"}
+  
+}
 
-#write_xlsx(Species_Block_Plot_List, "Species_Block_Plot_List.xlsx")
 ```
+
+```{r}
+inner_cover_max <- full_year_data  %>%
+      group_by(Block, Treatment, Year, SPP6) %>%
+      summarise(max_cover=max(Percent_Cover))
+
+##### Note I manually checked species that were found in both the datasets (ACHMIL, TRIREP, CORLAN) and confirmed that the code above took the highest cover value for a species seen twice
+
+
+### Remove Bare
+inner_cover_max_only <- subset(inner_cover_max, SPP6 != "BARE")
+### Remove Litter
+inner_cover_max_only  <- subset(inner_cover_max_only, SPP6 != "LITTER")
+
+head(inner_cover_max_only) 
+```
+
+```{r}
+
+### Bare dataset
+
+inner_bare_cover <- subset(inner_cover_max, SPP6 == "BARE")
+
+### Litter dataset
+
+inner_litter_cover <- subset(inner_cover_max, SPP6 == "LITTER")
+
+
+### Manipulate 2021 dataset to match 2022 and 2023
+
+#### Bare Ground
+
+bare_2021 <- subset(bare_cover_2021, Cover_Type != "Litter")
+bare_2021 <- subset(bare_2021, Treatment != "EMP")
+names(bare_2021) <- c("Block", "Treatment", "SPP6", "max_cover")
+bare_2021$Year <- rep("2021", nrow(bare_2021))
+
+for(i in 1:nrow(bare_2021)) {
+  if(bare_2021[i,3] == "Bare"){bare_2021[i,3] <- "BARE"}
+}
+
+#### Litter 
+
+litter_2021 <- subset(bare_cover_2021 , Cover_Type != "Bare")
+litter_2021 <- subset(litter_2021, Treatment != "EMP")
+names(litter_2021) <- c("Block", "Treatment", "SPP6", "max_cover")
+litter_2021$Year <- rep("2021", nrow(litter_2021))
+
+
+for(i in 1:nrow(litter_2021)) {
+  if(bare_2021[i,3] == "Litter"){bare_2021[i,3] <- "LITTER"}
+}
+
+
+### Full_join datasets
+
+inner_bare_cover <- full_join(inner_bare_cover, bare_2021)
+
+inner_litter_cover <- full_join(inner_litter_cover, litter_2021)
+
+
+```
+
 
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
-#Import cleaned species list to join with the original inner dataset
-#### Last cleaned the dataset on December 06, 2022
-setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
+#Checking again to make sure all the SPP6 levels are correct (no misspellings or weirdness)
+sort(unique(inner_cover_max_only$SPP6))
+
+SPP6_list <- sort(unique(inner_cover_max_only$SPP6))
+SPP6_list <- as.data.frame(SPP6_list)
+
+### Saw at least 94 different species across study
+#### More since I had to lump MELOFF, MELALB, CARFRA, and CARBRE
+
+# write_xlsx(SPP6_list, "Species_List2.xlsx")
+```
 
 
-Species_List_PE_2022 <- read_excel("Cleaned_PE_Detailed_Species_List_2022.xlsx")
+```{r}
 
+### Add species information to the dataset
+
+#### N/A is N = native, A = non-native, G = Genus
+
+inner_cover_max_only <- full_join(inner_cover_max_only, species_list_PE)
+
+```
+
+```{r}
 #Remove unnecessary columns
-Species_List_Reduced_PE_2022 <- Species_List_PE_2022 [, 1:4]
-Species_List_Reduced_PE_2022 <- Species_List_Reduced_PE_2022 %>% 
-  rename(SPP6 = SPP6.x)
-
-#Join to inner dataset
-joined_inner_cover_2022 <- full_join(inner_cover_max_2022, Species_List_Reduced_PE_2022, by = "SPP6" )
-
-#Remove extra name column
-joined_inner_cover_2022 <- joined_inner_cover_2022[,-6]
-
-#Rename the Scientific_Name column
-joined_inner_cover_2022 <- joined_inner_cover_2022 %>% 
-  rename(Scientific_Name = Scientific_Name.x)
-
-#Check 
-#view(joined_inner_cover_2022)
-
-# END OF DATA CLEANING
+inner_cover_max_reduced <- inner_cover_max_only[, -c(6,7,10)]
 
 ```
 
@@ -342,24 +434,13 @@ joined_inner_cover_2022 <- joined_inner_cover_2022 %>%
 # Exploratory Analysis of Diversity
 
 
-
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 ### Making a summary table of diversity indices between treatments
 
 #Make a unique identifier for every block and treatment
-joined_inner_cover_2022$UniqueBlock <- paste(joined_inner_cover_2022$Treatment, joined_inner_cover_2022$Block, sep="_")
+inner_cover_max_reduced$UniqueBlock <- paste(inner_cover_max_reduced$Treatment, inner_cover_max_reduced$Block, sep="_")
 ```
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-#Export this cleaned 2022 data set as an excel file so I can use it for combined analyses with the 2021 data
-## Last exported December 7th, 2022
-setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
-#write_xlsx(joined_inner_cover_2022, "joined_inner_cover_2022.xlsx")
-
-```
-
 
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
@@ -367,17 +448,13 @@ setwd("~/Desktop/PhD Research/Priority Effects - 2021/Datasets/Cover_Datasets")
 
 ### Making a community matrix
 
-
-#Make a reduced dataset
-joined_inner_cover_2022_reduced <- joined_inner_cover_2022[, c(3,5,8)]
-
-joined_inner_cover_2022_reduced <- joined_inner_cover_2022_reduced %>% 
-  group_by(UniqueBlock, SPP6) %>% 
+inner_cover_max_reduced_lumped <- inner_cover_max_reduced %>% 
+  group_by(Block, Treatment, Year, SPP6) %>% 
   summarise(max_cover = sum(max_cover))
 
 
 #Make a wide formatted dataset
-inner_wide <- joined_inner_cover_2022_reduced  %>% 
+inner_wide <- inner_cover_max_reduced_lumped  %>% 
   spread(key="SPP6", value="max_cover") 
 
 #Replace NA values with 0
@@ -385,13 +462,10 @@ inner_wide <- joined_inner_cover_2022_reduced  %>%
 inner_wide[is.na(inner_wide)] <- 0 
 
 #Make a separate dataframe for the labels
-inner_wide.labs <- inner_wide[, 1]
+inner_wide.labs <- inner_wide[, c(1,2,3)]
 
 #Turn our dataset into a matrix 
-inner_wide_mat <- inner_wide[,-1]
-
-row.names(inner_wide_mat) <- inner_wide.labs$UniqueBlock
-inner_wide_mat <- data.matrix(inner_wide_mat)
+inner_wide_mat <- inner_wide[,-c(1,2,3)]
 
 
 #Double check your work using the View() function. 
@@ -406,7 +480,7 @@ inner_wide_mat <- data.matrix(inner_wide_mat)
 # Species richness
 
 
-Species_richness <- specnumber(inner_wide_mat[,-1])
+Species_richness <- specnumber(inner_wide_mat)
 Species_richness
 
 ```
@@ -433,9 +507,9 @@ Shannon
 
 # Make a dataset that has each treatment, the species found in that treatment, and their associated C values
 
-C_hist <- joined_inner_cover_2022  %>% 
+C_hist <- inner_cover_max_reduced  %>% 
                   filter( Provenance %in% "N") %>% 
-                  group_by(Treatment, SPP6, C) %>% 
+                  group_by(Block, Treatment, SPP6, Year, C_Value) %>% 
             summarize(tot.cover = sum(max_cover)) %>% 
             select(-c(tot.cover))
 ```
@@ -446,27 +520,30 @@ C_hist <- joined_inner_cover_2022  %>%
 
 # Calculate mean C for each Treatment in a Block
 ### Remember you have to filter out anything that isn't native!
-Mean_C_2022 <- joined_inner_cover_2022  %>% 
-                  filter( Provenance %in% "N") %>% 
-                  group_by(UniqueBlock, Treatment, Block) %>% 
-                  summarize(Mean_C = mean(C))
+Only_C <- inner_cover_max_reduced  %>% 
+                  filter( C_Value >= 0) %>% 
+                  filter( C_Value != "NA") 
+
+Only_C$C_Value <- as.numeric(Only_C$C_Value)
+
+Mean_C <- Only_C %>% 
+                  group_by(Block, Treatment, Year) %>% 
+                  summarize(Mean_C = mean(C_Value))
 ```
 
 
 ### Summary Table of Diversity Indices
 
 ```{r, r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-Summary_table_2022 <- data.frame(inner_wide.labs$UniqueBlock, Mean_C_2022$Treatment, Mean_C_2022$Block, Species_richness, Shannon, Mean_C_2022$Mean_C)
+Summary_table <- data.frame(Mean_C$Treatment, Mean_C$Block, Mean_C$Year, Species_richness, Shannon, Mean_C$Mean_C)
 
-# Summary table for the Mean C, Species Richness, and Shannon's diversity for each block and treatment combination
+# Summary table for the Mean C, Species Richness, and Shannon's diversity for each block, treatment, and year combination
 
-Summary_table_2022 <- Summary_table_2022 %>% 
-  rename(UniqueBlock = inner_wide.labs.UniqueBlock, Treatment = Mean_C_2022.Treatment, Block = Mean_C_2022.Block,Mean_C = Mean_C_2022.Mean_C)
+Summary_table <- Summary_table %>% 
+  rename(Treatment = Mean_C.Treatment, Block = Mean_C.Block, Year = Mean_C.Year, Mean_C = Mean_C.Mean_C)
 
-### Get rid of the row lables
-rownames(Summary_table_2022) <- NULL
 
-Summary_table_2022
+Summary_table
 ```
 
 Below is a summary table showing the mean and SD for mean C value (C), species richness (SR), and Shannon diversity index (SDI) for each seeding treatment.
@@ -474,14 +551,14 @@ Below is a summary table showing the mean and SD for mean C value (C), species r
 ```{r, echo = FALSE, message = FALSE}
 # Summary table for the mean and standard deviation for C values, Species Richness, and Shannon's diversity for each treatment overall
 
-Summary_table_2022_mean <- Summary_table_2022 %>% 
-  group_by(Treatment) %>%   
+Summary_table_mean <- Summary_table %>% 
+  group_by(Treatment, Year) %>%   
   summarise(Mean_C_t = mean(Mean_C), SD_C = sd(Mean_C), mean_richness = mean(Species_richness), SD_richness = sd(Species_richness), mean_Shannon = mean(Shannon), SD_Shannon = sd(Shannon))
   
-Summary_table_2022_mean <- Summary_table_2022_mean %>% 
+Summary_table_mean <- Summary_table_mean %>% 
 rename(Treatment = Treatment, "C - Mean" = Mean_C_t, "C - SD" = SD_C, "SR - Mean" = mean_richness,"SR - SD" = SD_richness, "SDI - Mean" = mean_Shannon, "SDI - SD" = SD_Shannon )
 
-Summary_table_2022_mean 
+Summary_table_mean 
 ```
 
 ### Analyzing diversity
