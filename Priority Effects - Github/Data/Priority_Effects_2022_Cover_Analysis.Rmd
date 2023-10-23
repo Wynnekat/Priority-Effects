@@ -14,39 +14,79 @@ mathfont: Arial
 fontsize: 12pt
 ---
 
+#  {.tabset .tabset-pills .tabset-fade}
+
+## Overview
+
+### **The role of temporal dispersal patterns in building diverse tallgrass prairie plant communities**
+
+**Background**: 
+
+Establishing diverse plant communities is critical since diversity is linked to ecosystem health. However, recreating tallgrass prairies with high plant diversity has been challenging, especially for early-season species. Variation in species arrival may influence plant community composition and diversity. Since prairies exhibit temporal patterns of seed dispersal, planting all species simultaneously could forgo phenological differences that promote species coexistence. Therefore, we investigated whether manipulating plant species' arrival according to natural dispersal phenology influences reconstruction outcomes.  
+
+In 2021, we manipulated the arrival of 36 species via seed additions of (i) species in the order of peak dispersal timing, (ii) summer dispersing species (first peak in dispersal activity before September 1st) followed by 18 fall dispersing species, (iii) 18 fall dispersing species followed by 18 summer dispersing species, (iv) all species simultaneously. Additionally, we had a negative control that had no seed additions. One year later, we found that differences in seeding treatment influenced the diversity and composition of reconstructed communities. Species arriving later had less cover than when seeded with priority, particularly for summer dispersing species. Overall, our study provides evidence of priority effects in reconstructed grasslands and suggests that the timing of seed additions post-disturbance influences restoration outcomes.
 
 
+**Author:** Katherine Carter Wynne ([Wynnekat\@msu.edu](mailto:Wynnekat@msu.edu){.email})
 
-```{r}
-# PROLOG   ##############################################################################
+**Co-authors:** Lauren L. Sullivan
 
-# PROJECT: Priority Effects Experiment 
-# PURPOSE: Determine how species arrival via seed additions affects the community assembly of restored prairie plant communities
-#
-# AUTHOR:  Katherine Wynne (Wynnekat@msu.edu)
-# COLLAB:  L. Sullivan
-# CREATED: 06 December 2022
-#
-# FILES:   1) inner_cover_summer_2022.xlsx - vegetative cover taken in the Summer (end of June)
-#          2) inner_cover_fall _2022.xlsx - vegetative cover taken at peak biomass (end ofAugust)
-#          3) Checklist of Missouri Flora.xlsx - contains the information about all plants found in MO
-#          4) Cleaned_PE_Detailed_Species_List_2022.xlsx - dataset containing the information about only                                                                plants found in the study
-#         
-#LAST UPDATED: 06 September 2023
-# PROLOG   ##############################################################################
-```
+**Created:** 06 December 2022
 
-## Treatment information & Setup {.tabset}
+------------------------------------------------------------------------
 
-NON = None (no species seeded)
+**Files:**
 
-SIM = Simulataneous (36 species seeded on March 22nd, 2021)
+1) *PE_Cover_Inner_Fall_2021_Cleaned.xlsx*  - vegetative cover taken at peak biomass in 2021 (August 27th - August 30th); only half of the lumped seedings occured.
 
-LE = Lumped early (18 early-dispersing species seeded on March 23rd, 2021 then 18 late-dispersing species seeded on September 5th, 2021)
+2) *PE_Cover_Inner_Summer_2022_Cleaned.xlsx* - vegetative cover measured in Summer 2022 (June 27th - June 28th)
 
-LL = Lumped late (18 late-dispersing species seeded on March 23rd, 2021 then 18 early-dispersing species seeded on September 5th, 2021)
+3) *PE_Cover_Inner_Fall_2022_Cleaned.xlsx* - vegetative cover taken at peak biomass in 2022 (August 25th - August 26th)
 
-NAT = Natural; species added according to peak dispersal date
+4) *PE_Cover_Inner_Summer_2023_Cleaned.xlsx* - vegetative cover measured in Summer 2023 (June 21st - June 23rd)
+
+5) *PE_Cover_Inner_Fall_2023_Cleaned.xlsx* - vegetative cover taken at peak biomass in 2023 (August 10th - August 11th) 
+
+6) *Bradford_10_Year_Weather.xlsx* - weather (temperature and precipitation) data from the last 10 years at Bradford Research Farm
+
+7) *Priority_Effects_Fall_2022_Light.xlsx* - light data from August 2022; measured at the same time as peak biomass cover
+
+8) *Priority_Effects_Fall_2023_Light.xlsx* - light data from August 2023; measured at the same time as peak biomass cover
+
+9) *PE_Bare_Ground_Cleaned_2021.xlsx* - Litter and bare ground cover from August 2021
+
+10) *Species_List.xlsx* - Species list
+
+
+------------------------------------------------------------------------
+
+**R Version:** R 4.2.2
+
+**RStudio Version:** 2023.06.1+524
+
+**Package Version:** Found in the .readme document in GitHub Repository
+
+**Last updated: 29 September 2023**
+
+------------------------------------------------------------------------
+
+
+## Overall Setup {.tabset}
+
+**Materials and Methods**
+
+*Study Site*
+
+Our experiment utilized a former agricultural field (~1 acre) at the University of Missouri’s Bradford Research Center in Columbia, MO (38.893604, -92.201154, Boone County, MO). Typical for the central U.S., the 10-year (2011 – 2021) mean annual precipitation and average air temperature at Bradford Research Center were 927.74 $\pm$ 143.01 mm and 12.40 $\pm$ 10.45 $\circ$C, respectively (Commercial Agriculture Automated Weather Station Network, d.n.). Prior to our experiment, the field we grew herbicide-resistant soybeans for at least three years, reflecting conditions similar to most prairie reconstructions before seeding (Rowe, 2010; Newbold et al., 2019). In March 2021, we tilled our study site and hand-removed rhizome clumps to create a smooth surface before our first seeding. 
+
+
+*Experimental Design*
+
+We used seed additions to manipulate the arrival of 36 native tallgrass prairie plant species. Since prairies experience two peaks in dispersal activity (Rabinowitz & Rapp 1980), we classified species into two dispersal guilds, summer-dispersing species (first peak in dispersal activity before September 1st) and fall-dispersing species. Dispersal guild is more informative than flowering guild because dispersal does not always follow flowering (e.g., Penstemon digitalis). We based our classifications on expert opinion from the Missouri Department of Conservation, The Nature Conservancy, and our previous work on seed rain patterns in Missouri tallgrass prairies (Wynne et al. *in prep*). Species used in our study consisted of 29 native species captured in our previous study on seed rain and seven summer-dispersing species that restoration managers cited as having minimal success in prairie reconstructions (e.g., Viola pedatifida) (Table S1) (Barak et al., 2022). When possible, we obtained seeds from local ecotype commercial sellers. However, several summer-dispersing species were not grown commercially in Missouri and were sourced elsewhere. We stored the seeds in a refrigerator (2.78 $\circ$C) until seeding. 
+
+We used a randomized factorial block design to test the effects of seeding timing and order (Fig. 1). Each block (n = 6) contained five plots (2 x 2 m) randomly assigned a seed addition treatment following one of the four arrival treatments:
+
+1)	the addition of species in order of first peak in dispersal activity (NAT)
 
         - May 24th 2021 (VIOPED, PACPLA)
         - June 4th 2021 (SISCAM, SPHOBT, CORLAN)
@@ -61,60 +101,85 @@ NAT = Natural; species added according to peak dispersal date
         - November 1st 2021 (PENDIG, ERYYUC, HYPPUN, SORNUT, SCHSCO, LIAPYC)
         - November 19th 2021 (CORTRI, PYCTEN, SOLRIG)
       
+
+2)	the lumped addition of 18 summer-dispersing species on March 22nd, 2021 followed by a lumped addition of 18 fall-dispersing species approximately five months later on September 5th, 2021 (**LE**)
+
+
+3) the lumped addition of 18 fall-dispersing species on March 22nd, 2021 followed by a lumped addition of 18 summer-dispersing species approximately five months later on September 5th, 2021 (**LL**)
+
+4) the simultaneous addition of the entire species pool on March 22nd, 2021 typical of most prairie reconstructions (**SIM**).
+
+Additionally, we had an unseeded negative control (NON) to determine whether active seeding treatments improved community diversity compared to passive regeneration from ambient seed sources (e.g., seed rain and soil seed bank). We also seeded white clover (*Trifolium repens*) between the experimental plots to prevent erosion. In fall 2022, we started annually removing invading white clover and woody species from plots. All other unseeded species were not weeded to better reflect realistic assembly and reconstruction processes.
+
+We started seeding at the end of the dormant season (March 22nd, 2021) and continued until November 19th, 2021. We hand-seeded species into experimental plots at a density of 50 seeds $m^{-2}$  using sand as a broadcasting agent.  For treatments requiring multiple seedings, we incorporated M-Binder tackifier (Ecology Controls, Carpinteria, CA), a natural adhesive often used in hydroseeding, into the seeding mixes to increase soil-seed contact without disturbing the existing vegetation.  After seeding, we lightly watered plots to activate the tackifier. All plots received equal amounts of sand, tackifier, and water during every seeding.
+
+*Data Collection*
+
+Starting in 2022, we conducted floristic surveys to assess plant community diversity and composition in experimental plots for two years. To determine species abundance, we measured the percent aerial cover of all vascular plant species rooted within a 1 $m^{2}$ subplot in the center of the experimental plot. Because many seeded summer-dispersing species senesce before peak biomass (August – September), we measured vegetative cover twice yearly, once in the early summer (late June) and again at peak biomass (late August). We only used the highest percent cover value for species present in both surveys. We identified species according to Yatskievych (1999, 2006, 2013). Additionally, we measured environmental variables including percent bare ground cover and light levels in plots.  For each plot, we measured light levels using a (**insert name of light bar**) two times above the vegetation, in the midstory, and ground-level at solar noon $\pm$ 2 hours.
+
+
+*Data Setup*
+
+Each tab below contains the code used to import, clean, and manipulate data to later use for further analyses. 
+
+      
 ### Load libraries {.tabset}
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE}
 
 ## Libraries
 
 
+### ----- Data Cleaning and Management -----
+
 # Import excel files
+
 library(readxl)
 
-# Data cleaning and visualization
-library(tidyverse)
-
-# Community ecology functions (NMDS, diversity indices, etc.)
-library(vegan)
 
 # Export dataframes to excel files
+
 library(writexl)
 
-# Dimensions check for NMDS stress
-library(goeveg)
 
-# Function for pairwise PERMANOVA tests
+# Data cleaning and visualization
 
-library(pairwiseAdonis)
+library(tidyverse)
 
-# Function that allows for 3D NMDS plots
-library(vegan3d)
 
-#Makes grided figures
-library(cowplot)
 
-#Makes the sig bars
-library(ggsignif)
+### ----- Data Analysis -----
 
-#Mixed models
+# Community ecology functions (NMDS, diversity indices, etc.)
+
+library(vegan)
+library(BiodiversityR)
+
+# Mixed models
 
 library(lme4)
 library(lmerTest)
 library(MuMIn)
 
+# Checks model assumptions
+
 library(rstatix)
 
+### ----- Data visualization -----
+
+
+#Functions that assist in making high quality figures
+
+library(cowplot)
 library(ggpubr)
-
-library(BiodiversityR)
-
 library(ggrepel)
-```
+library(flextable)
 
+```
 
 ### Import Datasets {.tabset}
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE}
 
 ## Import Datasets
 
@@ -164,7 +229,10 @@ species_list_PE <- read_excel("~/Priority-Effects/Priority Effects - Github/Data
 #### 2021 
 
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
+
+## 2021 Inner Cover - Dataset cleaning
+
 
 ### Remove unnecessary columns
 
@@ -190,7 +258,7 @@ inner_cover_fall_2021 <- subset(inner_cover_fall_2021, Treatment != "EMP")
 
 #### 2022
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE}
 
 ## 2022 Inner Cover - Dataset cleaning
 
@@ -226,7 +294,7 @@ inner_cover_fall_2022 <- subset(inner_cover_fall_2022, Treatment != "EMP")
 
 #### 2023
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE}
 
 ## 2023 Inner Cover - Dataset cleaning
 
@@ -254,9 +322,9 @@ inner_cover_summer_2023 <- subset(inner_cover_summer_2023, Treatment != "EMP")
 inner_cover_fall_2023 <- subset(inner_cover_fall_2023, Treatment != "EMP")
 ```
 
+#### Joining Years 
 
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE}
 
 #Checking to make sure all the SPP6 levels are correct (no misspellings or weirdness)
 
@@ -279,7 +347,8 @@ sort(unique(inner_cover_fall_2023$SPP6))
 
 ```
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
+
 # Make a unique identifier for year and season
 
 ### 2021
@@ -310,8 +379,9 @@ inner_cover_summer_2023$Year <- rep("2023", nrow=(inner_cover_summer_2023))
 inner_cover_summer_2023$Year <- as.factor(inner_cover_summer_2023$Year)
 ```
 
-```{r}
-# Join years together
+```{r, message = FALSE, warning = FALSE}
+
+# Join summer and fall cover for each year 
 
 full_2021_data <- inner_cover_fall_2021
 
@@ -330,7 +400,8 @@ full_year_data <- full_join(full_21_22_data, full_2023_data)
 
 ```
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
+
 # lump certain taxa together 
 
 ### Lump the Carex for now (*****Ask Lauren about what to do about when the CARSPP > CARFRA or CARBRE?***)
@@ -355,7 +426,10 @@ for(i in 1:nrow(full_year_data)) {
 
 ```
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
+
+# Function below takes that highest cover value for a species seen twice (e.g., once in the summer and again in fall)
+
 inner_cover_max <- full_year_data  %>%
       group_by(Block, Treatment, Year, SPP6) %>%
       summarise(max_cover=max(Percent_Cover))
@@ -365,15 +439,50 @@ inner_cover_max <- full_year_data  %>%
 
 ### Remove Bare
 inner_cover_max_only <- subset(inner_cover_max, SPP6 != "BARE")
+
+
 ### Remove Litter
 inner_cover_max_only  <- subset(inner_cover_max_only, SPP6 != "LITTER")
 
-head(inner_cover_max_only) 
 ```
 
-### Bare/Litter
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
+
+#Checking again to make sure all the SPP6 levels are correct (no misspellings or weirdness)
+
+sort(unique(inner_cover_max_only$SPP6))
+
+SPP6_list <- sort(unique(inner_cover_max_only$SPP6))
+SPP6_list <- as.data.frame(SPP6_list)
+
+### Saw at least 94 different species across study
+#### More since I had to lump MELOFF, MELALB, CARFRA, and CARBRE
+
+
+### Function below makes the species list 
+
+# write_xlsx(SPP6_list, "Species_List2.xlsx")
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+
+### Add species information to the dataset
+
+#### N/A is N = native, A = non-native, G = Genus
+
+inner_cover_max_only <- full_join(inner_cover_max_only, species_list_PE)
+
+#Remove unnecessary columns
+
+inner_cover_max_reduced <- inner_cover_max_only[, -c(6,7,10)]
+
+```
+
+#### Bare/Litter
+
+```{r, message = FALSE, warning = FALSE}
 
 ### Bare dataset
 
@@ -421,51 +530,25 @@ inner_litter_cover <- full_join(inner_litter_cover, litter_2021)
 
 
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-#Checking again to make sure all the SPP6 levels are correct (no misspellings or weirdness)
-sort(unique(inner_cover_max_only$SPP6))
-
-SPP6_list <- sort(unique(inner_cover_max_only$SPP6))
-SPP6_list <- as.data.frame(SPP6_list)
-
-### Saw at least 94 different species across study
-#### More since I had to lump MELOFF, MELALB, CARFRA, and CARBRE
-
-# write_xlsx(SPP6_list, "Species_List2.xlsx")
-```
+## Question 1: Does timing of species arrival influence local diversity? {.tabset}
 
 
-```{r}
+### Setup and Data Management
 
-### Add species information to the dataset
-
-#### N/A is N = native, A = non-native, G = Genus
-
-inner_cover_max_only <- full_join(inner_cover_max_only, species_list_PE)
-
-```
-
-```{r}
-#Remove unnecessary columns
-inner_cover_max_reduced <- inner_cover_max_only[, -c(6,7,10)]
-
-```
+*Data Analysis*
 
 
-## Exploratory Analysis of Diversity {.tabset}
+We fit mixed-effects linear models with block as a random effect to determine whether year, timing of species arrival via seeding treatments, and the interaction between year and seeding treatments influenced local diversity (i.e., species richness, mean conservatism value, and Shannon diversity index) in reconstructed tallgrass prairie plant communities. In cases where random effect variance was estimated as near zero, we dropped the random effect and fit a simpler linear model instead. For each diversity model, we conducted a type III analysis of variance (ANOVA) followed by a posthoc Tukey test to determine significant pairwise differences. 
 
+      
+Below is the code used to calculate the species richness, mean conservatism value, and Shannon diversity index for each plot, treatment, and year combination. 
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE}
 
 ### Making a summary table of diversity indices between treatments
 
 #Make a unique identifier for every block and treatment
 inner_cover_max_reduced$UniqueBlock <- paste(inner_cover_max_reduced$Treatment, inner_cover_max_reduced$Block, sep="_")
-```
-
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 
 ### Making a community matrix
@@ -477,6 +560,7 @@ inner_cover_max_reduced_lumped <- inner_cover_max_reduced %>%
 
 
 #Make a wide formatted dataset
+
 inner_wide <- inner_cover_max_reduced_lumped  %>% 
   spread(key="SPP6", value="max_cover") 
 
@@ -498,34 +582,23 @@ inner_wide_mat <- inner_wide[,-c(1,2,3)]
 ```
 
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE}
 
-# Species richness
+## Calculate diversity metrics
 
+
+# --- Species richness --- 
 
 Species_richness <- specnumber(inner_wide_mat)
-Species_richness
-
-```
 
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-
-# Shannon's Diversity
+#  --- Shannon's Diversity --- 
 
 #Calculate Shannon's Diversity
 Shannon <- diversity(inner_wide_mat, index="shannon")
 
-Shannon
 
-```
-
-
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-# Mean C
+# --- Mean C --- 
 
 
 # Make a dataset that has each treatment, the species found in that treatment, and their associated C values
@@ -537,14 +610,11 @@ C_hist <- inner_cover_max_reduced  %>%
                   group_by(Block, Treatment, SPP6, Year, C_Value) %>% 
             summarize(tot.cover = sum(max_cover)) %>% 
             select(-c(tot.cover))
-```
 
-
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 # Calculate mean C for each Treatment in a Block
 ### Remember you have to filter out anything that isn't native!
+
 Only_C <- inner_cover_max_reduced  %>% 
                   filter(Year != "2021") %>% 
                   filter( C_Value >= 0) %>% 
@@ -558,17 +628,19 @@ Mean_C <- Only_C %>%
 ```
 
 
-### Summary Table of Diversity Indices
 
-```{r, r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+### Diversity Indices - Summary Statistics
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+# Make a new data frame to hold the diversity metrics
 Summary_table <- data.frame(Mean_C$Treatment, Mean_C$Block, Mean_C$Year, Species_richness, Shannon, Mean_C$Mean_C)
 
 # Summary table for the Mean C, Species Richness, and Shannon's diversity for each block, treatment, and year combination
 
 Summary_table <- Summary_table %>% 
   rename(Treatment = Mean_C.Treatment, Block = Mean_C.Block, Year = Mean_C.Year, Mean_C = Mean_C.Mean_C)
-
-
 
 ```
 
@@ -586,26 +658,59 @@ rename(Treatment = Treatment, "C_Mean" = Mean_C_t, "C_SD" = SD_C, "SR_Mean" = me
 
 ```
 
-### Analyzing diversity
+```{r, echo = FALSE, message = FALSE}
+flextable(Summary_table_mean) %>% 
+  bold(part = "header") %>% 
+  set_header_labels(values = list(
+                      Treatment = "Treatment",
+                      Year = "Year",
+                    C_Mean = "C",
+                   C_SD =  "\u00B1 SD",
+                   SR_Mean = "Richness",
+                   SR_SD = "\u00B1 SD",
+                   SDI_Mean = "SDI",
+                   SDI_SD = "\u00B1 SD")) %>% 
+  colformat_double(
+    big.mark = ",", digits = 2, na_str = "N/A"
+  )
+```
 
-### Mean C 
 
+### Mean C {.tabset}
 
-##### Mean C - Model assumptions
+```{r}
 
-Distribution of C values for all treatments were right skewed, indicating the majority of native plants in all treatments were of low conservatism value. SIM had the most "even" distribution of C values and almost every value was represented in this treatment. 
+BioR.theme <- theme(
+panel.background = element_blank(),
+panel.border = element_blank(),
+panel.grid = element_blank(),
+axis.line = element_line("gray25"),
+text = element_text(size = 16, family="Arial"),
+axis.text = element_text(size = 13, colour = "gray25"),
+axis.title = element_text(size = 16, colour = "gray25"),
+legend.title = element_text(size = 16),
+legend.text = element_text(size = 16),
+legend.key = element_blank())
+```
 
-```{r, echo = FALSE}
+#### Mean C - Model assumptions
+
+Distribution of C values for all treatments were right skewed, indicating the majority of native plants in all treatments were of low conservatism value. Simultaneous seeding had the most "even" distribution of C values and almost every value was represented in this treatment. Across years, the largest changes in the distribution of C values were in the treatments that seeded the fall dispersing species in September. These changes were attributed to the replacement of species with low c values with more conservative species. Plots that were never seeded mainly consisted of species with low conservatism value. 
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
 # Make a histogram showing the distribution of c values in each treatment
 
 ggplot(data = C_hist, aes(x= C_Value, fill = Year)) +geom_density(bins =30, alpha =0.4) +facet_wrap(~Treatment) + scale_x_continuous(breaks = seq(0, 10, 1))
 ```
 
-```{r}
+Generally, mean C values were normally distributed with few extreme outliers, suggesting we can use a linear model to predict mean c as a function of treatment and year. 
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 # A couple of outliers in the NAT treatment but likely alright since the variablity in outcomes seems to be a characteristic of NAT
 
-# only one extreme value in LE 2021 (likely because of DALCAN and VIOPED)
+# Only one extreme value in LE 2021 (likely because of DALCAN and VIOPED)
 Summary_table %>%
   group_by(Treatment, Year) %>%
   identify_outliers(Mean_C)
@@ -625,102 +730,143 @@ ggplot(data = Summary_table , aes(x= Mean_C)) +geom_histogram(bins =15)
 ggqqplot(Summary_table , "Mean_C", ggtheme = theme_bw()) +
   facet_grid(Year~ Treatment, labeller = "label_both")
 
-
 ```
 
-##### Mean C - Model fitting
+#### Mean C - Model fitting
 
 
-Mean C values were significantly higher in all treatments compared to the NON treatment. 
+I used a linear model to predict mean c as a function of seeding treatment, year, and an interaction between treatment and year. A mixed model using block as a random effect produced a singular fit because the variance explained by the random effect block was estimated as close to zero and did not further inform the data. Therefore, I chose to use the simpler model. 
 
-```{r}
-#Dropped the mixed model due to singular fit -> the variance of the random effect block is estimated close to zero and does not further inform the data. 
+Model fit was high, with an adjusted $R^{2}$ value of 0.687. Also, residual plots did not reveal any concerning patterns.
+
+```{r, echo = FALSE, message = FALSE}
+
+
+
+# Dropped the mixed model due to singular fit -> the variance of the random effect block is estimated close to zero and does not further inform the data. 
 
 Summary_table$Block <- as.factor(Summary_table$Block)
 
+Summary_table$Treatment <- factor(Summary_table$Treatment, levels=c("LE", "LL", "NAT", "NON" , "SIM"))
+
+
 # Normal interaction model
 
-#Mean_C.mod.lmer.interaction <- lmer(Mean_C~Treatment*Year+(1|Block), data =Summary_table)
-#AIC(Mean_C.mod.lmer.interaction)
-
-
-# Normal - additive model (has the lowest AIC)
-
-
-Mean_C.mod.lm.additive <- lm(Mean_C~Treatment+Year, data =Summary_table)
+Mean_C.mod.lm.interaction <- lm(Mean_C~Treatment*Year, data =Summary_table)
 
 ## Summary results
-summary(Mean_C.mod.lm.additive)
 
-## AIC test
-AIC(Mean_C.mod.lm.additive)
-
-## ANOVA type 3
-anova(Mean_C.mod.lm.additive)
-
-
-## I removed the random effect block because it had no effect on the model fit and explained no additional variance. (chose the most parsimonius model)
-
-# r.squaredGLMM(Mean_C.mod.lmer.additive)
-
-
-## Inclusion of the random effect marginally increased model fit 
-
-
-
-est.lm.treatment <- emmeans::emmeans(Mean_C.mod.lm.additive, "Treatment")
-
-
-#Posthoc test
-
-## Treatment
-pairs(est.lm.treatment, adjust = "tukey")
-
+summary(Mean_C.mod.lm.interaction)
 
 ```
 
 
 ```{r}
 # Residual plot looks decent
-plot(Mean_C.mod.lm.additive)
+plot(Mean_C.mod.lm.interaction)
 
 ```
 
-##### Mean C -  Figures
+Analysis of variance (type III) revealed that seeding treatment was the only significant factor influence mean c value. 
 
+```{r, echo = FALSE, message = FALSE}
+## ANOVA type 3
+
+Anova(Mean_C.mod.lm.interaction, type = 3)
+
+```
+
+Posthoc analysis indicated that all seeding treatments increased mean c value compared to unseeded plots. Seeding all species in one addition produced more conservative communities than treatments that seeded summer dispersing species first followed by fall dispersing species. Even though seeding only the fall dispersing species first produced higher quality communities than those that seeded species with natural timing, there was no difference in mean c between the seeding treatments that had two lumped additions. 
 
 ```{r}
-Summary_table_mean$Treatment <- factor(Summary_table_mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+Mean_C.mod.lm.est <- lm(Mean_C~Treatment, data =Summary_table)
 
-lower.c <- Summary_table_mean$C_Mean - Summary_table_mean$C_SD
-upper.c <- Summary_table_mean$C_Mean + Summary_table_mean$C_SD
 
-pd <- position_dodge(width = 0.8)
+est.lm.treatment_treatment <- emmeans::emmeans(Mean_C.mod.lm.est, ~ Treatment, type = "response")
 
-C.plot <- ggplot(data = Summary_table_mean, aes(x = Year, y = C_Mean, color = Treatment))+
-  geom_point(data = Summary_table_mean, size = 3, aes(shape = Treatment, fill = Treatment), position = pd)+
-  geom_errorbar(aes(ymin = lower.c , ymax = upper.c), width = 0.5, position = pd) +
-  labs(y = "Mean C", x = "Year" )+
-  theme_classic() +
-  theme(text=element_text(size=16), legend.key.size=unit(1, "cm"), legend.position="none")+
-  scale_color_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"),   breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
-  scale_fill_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"),   breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
-   scale_shape_manual(name = "Treatment", values=c(21, 22,23, 24, 25),   breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))
+pairs(est.lm.treatment_treatment, adjust = "tukey")
 
-C.plot
+
+#Posthoc test
+#est.lm.treatment <- emmeans::emmeans(Mean_C.mod.lm.interaction, ~ Treatment*Year, type = "response")
+
+#pairs(est.lm.treatment, adjust = "tukey")
+
 ```
 
 
-### Species Richness
+#### Mean C -  Figures
+
+
+Overall, seeding fall dispersing species early either as part of one simultaneous or as two lumped additions produced the highest quality communities. 
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+Summary_table_lumped <- Summary_table %>% 
+  group_by(Treatment) %>%   
+  summarise(Mean_C_t = mean(Mean_C), SD_C = sd(Mean_C), mean_richness = mean(Species_richness), SD_richness = sd(Species_richness), mean_Shannon = mean(Shannon), SD_Shannon = sd(Shannon))
+  
+Summary_table_lumped <- Summary_table_lumped %>% 
+rename(Treatment = Treatment, "C_Mean" = Mean_C_t, "C_SD" = SD_C, "SR_Mean" = mean_richness,"SR_SD" = SD_richness, "SDI_Mean" = mean_Shannon, "SDI_SD" = SD_Shannon )
+
+```
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+Summary_table_lumped$Treatment <- factor(Summary_table_lumped$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+Summary_table$Treatment <- factor(Summary_table$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+
+lower.c.treatment <- Summary_table_lumped$C_Mean - Summary_table_lumped$C_SD
+upper.c.treatment <- Summary_table_lumped$C_Mean + Summary_table_lumped$C_SD
+
+C.plot_treatment <-   ggplot()+
+  geom_jitter(data = Summary_table, aes(x = Treatment, y = Mean_C, fill = Treatment, shape = Treatment), alpha = 0.8, size = 3)+
+    geom_errorbar(data = Summary_table_lumped, aes(x = Treatment, y = C_Mean, ymin = lower.c.treatment , ymax = upper.c.treatment), width = 0.35, size = .75)+
+geom_point(data = Summary_table_lumped, size = 4.5, aes(x = Treatment, y = C_Mean, shape = Treatment), fill = "black")+
+  labs(y = "Mean C", x = "" )+
+  theme_classic() +
+  theme(text=element_text(size=18), legend.key.size=unit(1, "cm"), legend.position="none",  axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 14), axis.text.y = element_text(size = 14))+
+  scale_x_discrete(breaks = c("LE", "LL", "NAT", "NON", "SIM"),  labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"))+
+  scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),  labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"), values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
+scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"), labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"), values=c(21, 22,23, 24, 25))+
+  ylim(0,4)
+
+
+
+C.plot_treatment
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+set.seed(5)
+ C.plot_treatment <- C.plot_treatment + 
+  annotate("text", x = 1, y = 1.5, label = "a",
+           fontface =2, size = 5) +
+   annotate("text", x = 2, y = 3, label = "b",
+            fontface =2, size = 5) +
+   annotate("text", x = 3 , y = 3, label = "bc",
+            fontface =2, size = 5) +
+   annotate("text", x = 4, y = 3.25, label = "cd",
+            fontface =2, size = 5) +
+     annotate("text", x = 5, y =3.75, label = "d",
+              fontface =2, size = 5)
+```
+
+### Species Richness {.tabset}
 
 
 SIM treatments had the greatest species richness compared to all other treatments, while NON and NAT had the lowest. 
 
-##### SR - Model assumptions
+#### SR - Model assumptions
 
-```{r}
+Overall, species richness follows a normal distribution despite being count data. There were a couple of outliers in the natural seeding treatment but this is likely alright. 
 
-# A couple of outliers in the NAT treatment but likely alright since the variablity in outcomes seems to be a characteristic of NAT
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+# A couple of outliers in the NAT treatment but likely alright since the variability in outcomes seems to be a characteristic of NAT
 
 Summary_table %>%
   group_by(Treatment, Year) %>%
@@ -745,44 +891,76 @@ ggqqplot(Summary_table, "Species_richness", ggtheme = theme_bw()) +
 ```
 
 
-##### SR - Model fitting
+#### SR - Model fitting
 
-```{r}
+I chose to use a linear mixed-effects model with block as a random effect to predict species richness as a function of seeding treatment, year, and an interaction between treatment and year. Despite being count data, the distribution of species richness is remarkably balanced and not skewed. Model comparison using AIC revealed that the Normal model performed better than the Poisson model, which was underdispersed. A more complicated Quasipoisson model that accounted for underdispersion produced similar results to the Normal mixed model. Therefore, I chose to use the less complicated Normal model.
+
+Overall, model fit was decent. For example, $R^{2}_{GLMM(m)}$ (i.e., the variance explained by only the fixed effects) was 0.474 and $R^{2}_{GLMM(c)}$ (i.e., variance explained by the entire model) was 0.598. Inclusion of the random effect block substantially improved model fit. Furthermore, there were no strange patterns or occurrences in the model residuals.  
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+
 # Model Fitting
 
-## Despite being count data, the distribution of Species richness is remarkabley balanced and not skewed. Model comparison using AIC reveals that the Normal model works better than the Poisson model. Model results also differ likely because of under dispersion. The more complicated Quasipoisson model that accounts for under dispersion produces similar results to the Normal mixed model. Therefore, I'm going to go with the less complicated Normal model.
 
-
-SR.mod.normal <- lmer(Species_richness~Treatment+Year+(1|Block), data =Summary_table)
+SR.mod.normal <- lmer(Species_richness~Treatment*Year+(1|Block), data =Summary_table)
 summary(SR.mod.normal)
 
-
-## Treatment and Year significant
-## Interaction between Treatment and Year not significant
-
-anova(SR.mod.normal, type = 3)
-
-
-## Marginal R^2 (variance explained by ONLY fixed effects) = 0.4547589
-## Conditional R^2 (variance explained by the entire model) = 0.5554578
+## Marginal R^2 (variance explained by ONLY fixed effects) = 0.47437
+## Conditional R^2 (variance explained by the entire model) = 0.5975126
 
 ## Inclusion of the random effect increased model fit 
 
 
 r.squaredGLMM(SR.mod.normal)
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+# Residual plot looks decent except for one large outlier
+plot(SR.mod.normal)
+
+```
+
+A type III ANOVA revealed significant differences in species richness between years and seeding treatments. However, there was no significant interactive effect between year and seeding treatment on species richness. 
+
+Seeding treatments that added species either in one or two lumped additions had significantly greater species richness than unseeded plots. Multiple seedings according to natural dispersal activity did not increase species richness compared to unseeded plots.  Adding the entire species pool simultaneously produced communities with the greatest species richness.  Treatments that conducted multiple seedings resulted in communities possessing similar amounts of species richness regardless of timing and order of species arrival. 
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+
+## Treatment and Year significant
+## Interaction between Treatment and Year not significant
+
+Anova(SR.mod.normal, type = 3)
+
+
+SR.mod.normal.est <- lmer(Species_richness~Treatment+(1|Block), data =Summary_table)
+
+
+est.lmer.SR.treatment <- emmeans::emmeans(SR.mod.normal.est, ~ Treatment, type = "response")
 
 #Posthoc test
 
-est.lmer.SR.treatment <- emmeans::emmeans(SR.mod.normal, "Treatment")
-
-
 ## Treatment
-pairs(est.lmer.SR.treatment , adjust = "tukey")
+
+
+
+pairs(est.lmer.SR.treatment, adjust = "tukey")
+
+#Posthoc test
+
+## Treatment x Year
+
+#est.lmer.SR.treatment_Year <- emmeans::emmeans(SR.mod.normal, ~ Treatment*Year, type = "response")
+
+#pairs(est.lmer.SR.treatment_Year, adjust = "tukey")
 
 
 ```
 
-```{R}
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+
 # Poisson Model
 
 # SR.mod.pois <- glmer(Species_richness~Treatment+Year+(1|Block),family = "poisson", data =Summary_table)
@@ -812,54 +990,59 @@ pairs(est.lmer.SR.treatment , adjust = "tukey")
 ```
 
 
-```{r}
 
-# Residual plot looks decent except for one large outlier
-plot(SR.mod.normal)
+#### SR - Figures
 
-```
+Overall, seeding all species at the same time produced communities with the greatest species richness. For the most part, seeding increased species richness
 
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
-##### SR - Figures
+Summary_table_lumped$Treatment <- factor(Summary_table_lumped$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
 
-```{r}
-Summary_table_mean$Treatment <- factor(Summary_table_mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+Summary_table$Treatment <- factor(Summary_table$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
 
-lower.SR.c <- Summary_table_mean$SR_Mean - Summary_table_mean$SR_SD
-upper.SR.c <- Summary_table_mean$SR_Mean + Summary_table_mean$SR_SD
+lower.sr.treatment <- Summary_table_lumped$SR_Mean - Summary_table_lumped$SR_SD
+upper.sr.treatment <- Summary_table_lumped$SR_Mean + Summary_table_lumped$SR_SD
 
-pd <- position_dodge(width = 0.8)
-
-SR.plot1 <- ggplot(data = Summary_table_mean, aes(x = Year, y = SR_Mean, color = Treatment))+
-  geom_point(data = Summary_table_mean, size = 3, aes(shape = Treatment, fill = Treatment), position = pd)+
-  geom_errorbar(aes(ymin = lower.SR.c , ymax = upper.SR.c), width = 0.5, position = pd) +
-  labs(y = "Total Species Richness", x = "Year" )+
+sr.plot_treatment <-   ggplot()+
+  geom_jitter(data = Summary_table, aes(x = Treatment, y = Species_richness, fill = Treatment, shape = Treatment), alpha = 0.8, size = 3)+
+    geom_errorbar(data = Summary_table_lumped, aes(x = Treatment, y = SR_Mean, ymin = lower.sr.treatment , ymax = upper.sr.treatment), width = 0.35, size = .75)+
+geom_point(data = Summary_table_lumped, size = 4.5, aes(x = Treatment, y = SR_Mean, shape = Treatment), fill = "black")+
+  labs(y = "Species richness", x = "" )+
   theme_classic() +
-  ylim(10,30)+
-  theme(text=element_text(size=16), legend.key.size=unit(1, "cm"))+
-  scale_color_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"),   breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
-  scale_fill_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"),   breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
-   scale_shape_manual(name = "Treatment", values=c(21, 22,23, 24, 25),   breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
-    theme(legend.position="bottom")
-
-SR.plot <- SR.plot1 +
-    theme(legend.position="none")
+  theme(text=element_text(size=16), legend.key.size=unit(1, "cm"), legend.position="none",  axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 14), axis.text.y = element_text(size = 14))+
+  scale_x_discrete(breaks = c("LE", "LL", "NAT", "NON", "SIM"),  labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"))+
+  scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),  labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"), values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
+scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"), labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"), values=c(21, 22,23, 24, 25))+
+ylim(10,32)
 
 
-leg <- get_legend(SR.plot1)
+
+sr.plot_treatment 
 ```
 
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+set.seed(5)
+sr.plot_treatment  <- sr.plot_treatment  + annotate("text", x = 1, y = 22, label = "a",
+           fontface =2, size = 5) +
+   annotate("text", x = 2, y = 24.5, label = "b",
+            fontface =2, size = 5) +
+   annotate("text", x = 3 , y = 27.5, label = "bc",
+            fontface =2, size = 5) +
+   annotate("text", x = 4, y = 27.5, label = "cd",
+            fontface =2, size = 5) +
+     annotate("text", x = 5, y =31, label = "d",
+              fontface =2, size = 5)
 
+```
+### Shannon Diversity Index   {.tabset}
 
-### Shannon Diversity Index
-
-##### SDI - Model assumptions
+#### SDI - Model assumptions
 
 SIM and LL treatments had the greatest Shannon diversity index value while NON had the lowest. NAT and LE appear comparable. 
 
 
-```{r}
-
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 # Two extreme outliers (one in NAT 2021 and another in SIM 2021)
 Summary_table %>%
@@ -884,15 +1067,15 @@ ggqqplot(Summary_table, "Shannon", ggtheme = theme_bw()) +
 
 ```
 
-##### SDI - Model fitting
+#### SDI - Model fitting
 
-```{r}
-Shannon.lmer.mod <- lmer(Shannon~Treatment+Year+(1|Block), data =Summary_table)
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+
+Shannon.lmer.mod <- lmer(Shannon~Treatment*Year+(1|Block), data =Summary_table)
 summary(Shannon.lmer.mod)
-anova(Shannon.lmer.mod, type = 3)
+Anova(Shannon.lmer.mod, type = 3)
 
 # No significant interaction between treatment and year
-
 
 
 ## Marginal R^2 (variance explained by ONLY fixed effects) = 0.330704
@@ -906,66 +1089,88 @@ r.squaredGLMM(Shannon.lmer.mod)
 
 # Post-Hoc comparison
 
-pairs(emmeans::emmeans(Shannon.lmer.mod, "Treatment"))
+
+est.lmer.SDI.treatment <- emmeans::emmeans(Shannon.lmer.mod, ~ Treatment, type = "response")
 
 
+#Posthoc test
 
-
+## Treatment
+pairs(est.lmer.SDI.treatment, adjust = "tukey")
 
 ```
 
 
-
-```{r}
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 # A little heteroscedastic (bowtie shaped but probably ok)
+
 plot(Shannon.lmer.mod)
 
 ```
 
-##### SDI - Figures
+#### SDI - Figures
 
-```{r}
-Summary_table_mean$Treatment <- factor(Summary_table_mean$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
-lower.SDI.c <- Summary_table_mean$SDI_Mean - Summary_table_mean$SDI_SD
-upper.SDI.c <- Summary_table_mean$SDI_Mean + Summary_table_mean$SDI_SD
+Summary_table_lumped$Treatment <- factor(Summary_table_lumped$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
 
-pd <- position_dodge(width = 0.8)
+Summary_table$Treatment <- factor(Summary_table$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
 
-SDI.plot <- ggplot(data = Summary_table_mean, aes(x = Year, y = SDI_Mean, color = Treatment))+
-  geom_point(data =Summary_table_mean, size = 3, aes(shape = Treatment, fill = Treatment), position = pd)+
-  geom_errorbar(aes(ymin = lower.SDI.c , ymax = upper.SDI.c), width = 0.5, position = pd) +
-  labs(y = "SDI", x = "Year" )+
+lower.sdi.treatment <- Summary_table_lumped$SDI_Mean - Summary_table_lumped$SDI_SD
+upper.sdi.treatment <- Summary_table_lumped$SDI_Mean + Summary_table_lumped$SDI_SD
+
+sdi.plot_treatment <-   ggplot()+
+  geom_jitter(data = Summary_table, aes(x = Treatment, y = Shannon, fill = Treatment, shape = Treatment), alpha = 0.8, size = 3)+
+    geom_errorbar(data = Summary_table_lumped, aes(x = Treatment, y = SDI_Mean, ymin = lower.sdi.treatment , ymax = upper.sdi.treatment), width = 0.35, size = .75)+
+geom_point(data = Summary_table_lumped, size = 4.5, aes(x = Treatment, y = SDI_Mean, shape = Treatment), fill = "black")+
+  labs(y = "SDI", x = "" )+
   theme_classic() +
-  theme(text=element_text(size=16), legend.key.size=unit(1, "cm"), legend.position="none")+
-  scale_color_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"),   breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
-  scale_fill_manual(name = "Treatment", values=c("#E69F00", "#F0E442",  "#009E73", "#56B4E9", "#0072B2"),   breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))+
-   scale_shape_manual(name = "Treatment", values=c(21, 22,23, 24, 25),   breaks=c("NON", "NAT", "LE", "LL", "SIM"), labels = c("NON", "NAT", "LE", "LL", "SIM"))
+  theme(text=element_text(size=16), legend.key.size=unit(1, "cm"), legend.position="none",  axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 14), axis.text.y = element_text(size = 14))+
+  scale_x_discrete(breaks = c("LE", "LL", "NAT", "NON", "SIM"),  labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"))+
+  scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),  labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"), values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
+scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"), labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"), values=c(21, 22,23, 24, 25))
 
-SDI.plot 
+
+
+sdi.plot_treatment 
 ```
 
 
-### Plot Panel
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+set.seed(5)
+sdi.plot_treatment <- sdi.plot_treatment  +
+  annotate("text", x = 1, y = 2.2, label = "a",
+           fontface =2, size = 5) +
+   annotate("text", x = 2, y = 2.6, label = "ab",
+            fontface =2, size = 5) +
+   annotate("text", x = 3 , y = 2.6, label = "b",
+            fontface =2, size = 5) +
+   annotate("text", x = 4, y = 2.75, label = "b",
+            fontface =2, size = 5) +
+     annotate("text", x = 5, y =2.85, label = "c",
+              fontface =2, size = 5)
+```
 
-```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 12, fig.height = 4}
+### Plot Panel {.tabset}
 
-diversity_panel <- ggarrange(C.plot, SR.plot, SDI.plot,
-align='h', labels=c('A', 'B','C'), ncol = 3,
-common.legend = T, legend = "bottom")
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 4.5}
+set.seed(5)
+diversity_panel <- ggarrange(C.plot_treatment, sr.plot_treatment , sdi.plot_treatment ,
+align='h', labels=c('A', 'B','C'), ncol = 3, font.label = list(size = 16), vjust = 1)
 
 diversity_panel
 ```
 
 
 
-## Comparing seeded cover (in the inner 1 m^2 sampling area) for each treatment {.tabset}
+## Question 2: Does timing of species arrival influence seeded cover? {.tabset}
 
 
 **note** some of the species used in the seed mix were present in the seed bank at my study site (e.g., RUDHIR and PENDIG). Additionally, some spillover occurred with seeded species seeding into other treatments like NON (e.g., BIDARI)
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
 #inner_wide is the community matrix
 #inner_wide.labs has the labels
 
@@ -975,19 +1180,30 @@ inner_long <- inner_wide %>%
 ```
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+### Make a dataset that includes only species that were seeded
+
 Seeded <- inner_long  %>% 
   filter(Treatment %in% c("LE", "NAT", "LL", "SIM", "NON")) %>% 
   filter(SPP6 %in% c("ACHMIL","CORLAN", "LOBSPI","TRAOHI", "LINSUL", "CORPAL", "AMOCAN", "DALCAN", "DALPUR", "SPHOBT", "CARBUS", "KOEMAC",  "HEURIC", "VIOPED", "SISCAM", "DODMEA", "MELVIR", "PACPLA", "LESCAP","MONFIS", "BIDARI","SORNUT", "SCHSCO", "HYPPUN", "SPOHET", "HELMOL", "RATPIN", "SOLRIG", "PENDIG", "CHAFAS",  "ERYYUC", "CORTRI", "PYCTEN", "CROSAG", "RUDHIR", "LIAPYC"))
 
+
+### Make a dataset that includes only species that were not seeded
 
 Non_Seeded <- inner_long  %>% 
   filter(Treatment %in% c("LE", "NAT", "LL", "SIM", "NON")) %>% 
   filter(!SPP6 %in% c("ACHMIL","CORLAN", "LOBSPI","TRAOHI", "LINSUL", "CORPAL", "AMOCAN", "DALCAN", "DALPUR", "SPHOBT", "CARBUS", "KOEMAC",  "HEURIC", "VIOPED", "SISCAM", "DODMEA", "MELVIR", "PACPLA", "LESCAP","MONFIS", "BIDARI","SORNUT", "SCHSCO", "HYPPUN", "SPOHET", "HELMOL", "RATPIN", "SOLRIG", "PENDIG", "CHAFAS",  "ERYYUC", "CORTRI", "PYCTEN", "CROSAG", "RUDHIR", "LIAPYC"))
 ```
 
+```{r}
+Seeded2 <- Seeded %>% filter(Year == "2023") %>% filter(max_cover > 0) 
+unique(Seeded2$SPP6)
+```
+
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
-#Sum the total cover of seeded species per treatment.block 
+#Sum the total cover of seeded species per treatment.block.year
+
 Seeded_Tot <- Seeded %>% 
   filter(Treatment != "NON") %>% 
   group_by(Treatment, Block, Year) %>% 
@@ -1004,9 +1220,12 @@ Cover_Tot <- inner_long %>%
 
 Total_Cover_Tot <- full_join(Seeded_Tot, Cover_Tot)
 
+# Make a new column for the proportion of seeded cover
+
 Total_Cover_Tot$Seeded_prop <- Total_Cover_Tot$seeded_cover / Total_Cover_Tot$tot_cover 
 
 #Take the mean cover for each treatment
+
 Seeded_Mean <- Total_Cover_Tot %>% 
   group_by(Treatment, Year) %>% 
   summarise(Mean_seeded_prop = mean(Seeded_prop), SD = sd(Seeded_prop))
@@ -1019,22 +1238,29 @@ Seeded_Mean <- Total_Cover_Tot %>%
 
 #### TSC - Model fitting
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 
-## I removed the random effect block because it had no effect on the model fit and explained no additional variance. (chose the most parsimonius model)
+## I removed the random effect block because it had no effect on the model fit and explained no additional variance. (chose the most parsimonious model)
 
-# no interaction between year and treatment 
+# No interaction between year and treatment 
 # Random effect does not increase the amount of variance explained and results in singular fit
 
 Binom_mod <- glm(cbind(seeded_cover, tot_cover) ~ Treatment*Year, family = binomial, data = Total_Cover_Tot)
-
 summary(Binom_mod)
+
 Anova(Binom_mod, type = 3)
 
+## posthoc test
 pairs(emmeans::emmeans(Binom_mod , ~ Treatment*Year, type = "response"))
+
+pairs(emmeans::emmeans(Binom_mod , ~ Treatment, type = "response"))
+pairs(emmeans::emmeans(Binom_mod , ~ Year, type = "response"))
 ```
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
+
+## residuals look decent
+
 plot(Binom_mod)
 ```
 
@@ -1048,22 +1274,53 @@ Seeded_Mean$Treatment <- factor(Seeded_Mean$Treatment, levels=c("NAT", "LE", "LL
 
 total.cover.plot <- ggplot(data = Seeded_Mean, aes(x = Year,  y = Mean_seeded_prop, fill = Treatment))+
   geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend = TRUE)+
-  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Year, ymax=Mean_seeded_prop+SD, ymin = Mean_seeded_prop))+
-  scale_fill_manual(name = "Treatment", values=c("#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
+  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), 
+                aes(x = Year, ymax=Mean_seeded_prop+SD, ymin = Mean_seeded_prop), size = .75)  +
+  scale_fill_manual(name = "Treatment",
+                    breaks = c("NAT", "LE", "LL", "SIM"),
+                    labels = c("Natural","Summer first", "Fall first",  "Simultaneous"), 
+                    values=c("#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
   labs(x = "Year", y = "Prop. seeded cover")+
   theme_minimal()+
   theme()+ 
   scale_y_continuous(breaks=seq(0,.70,by=0.1), limits = c(0,.7))+
   theme_classic() +
-  theme(text=element_text(size=14))
+  theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
 
 total.cover.plot 
 
 ```
 
-### Early season seeded cover
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+# total.cover.plot  <- total.cover.plot  +
+#    annotate("text", x = .67, y = 0.18, label = "a",
+#            fontface =2, size = 5) +
+#    annotate("text", x = 0.9, y = 0.21 , label = "a",
+#             fontface =2, size = 5) +
+#    annotate("text", x = 1.12 , y = 0.38, label = "b",
+#             fontface =2, size = 5) +
+#    annotate("text", x = 1.335 , y = 0.53, label = "b",
+#             fontface =2, size = 5) +
+#      annotate("text", x = 1.67, y =0.24, label = "a",
+#               fontface =2,size = 5) +
+#    annotate("text", x = 1.9, y = 0.40, label = "c",
+#             fontface =2, size = 5) +
+#    annotate("text", x = 2.12, y = 0.50, label = "bd",
+#             fontface =2, size = 5) +
+#    annotate("text", x = 2.335, y = 0.67, label = "d",
+#             fontface =2, size = 5) 
+```
+
+
+
+
+### Seeded cover of summer dispersing species
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+# Make a dataset containing only species you seeded that disperse in the summer
 
 Seeded_early <- inner_long  %>% 
   filter(Treatment != "NON") %>% 
@@ -1072,6 +1329,8 @@ Seeded_early <- inner_long  %>%
 
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+
 Seeded_early_all <- Seeded_early %>% 
   group_by(Treatment, Year, Block) %>% 
   summarise(seeded_cover = sum(max_cover))
@@ -1081,7 +1340,13 @@ Seeded_early_all <- Seeded_early %>%
 
 Total_Cover_Early <- full_join(Seeded_early_all, Cover_Tot)
 
+# Make a new column for the proportion of summer dispersing seeded cover
+
+
 Total_Cover_Early$Seeded_prop <-Total_Cover_Early$seeded_cover / Total_Cover_Early$tot_cover
+
+# Obtain the mean and standard deviation for summer dispersing seeded cover
+
 
 Seeded_early_all_mean <- Total_Cover_Early %>% 
   filter(Treatment != "NON") %>% 
@@ -1101,15 +1366,24 @@ Seeded_early_all_mean <- Total_Cover_Early %>%
 # no interaction between year and treatment 
 # Random effect does not increase the amount of variance explained and results in singular fit
 
-Binom_mod_early <- glm(cbind(seeded_cover, tot_cover) ~ Treatment+Year, family = binomial, data = Total_Cover_Early)
+Binom_mod_early <- glm(cbind(seeded_cover, tot_cover) ~ Treatment*Year, family = binomial, data = Total_Cover_Early)
 
 summary(Binom_mod_early)
 Anova(Binom_mod_early, type = 3)
 
-pairs(emmeans::emmeans(Binom_mod_early, ~ Treatment, type = "response"))
+
+## Posthoc tests
+
+
+Binom_mod_early.est <- glm(cbind(seeded_cover, tot_cover) ~ Treatment+Year, family = binomial, data = Total_Cover_Early)
+
+pairs(emmeans::emmeans(Binom_mod_early.est, ~ Treatment, type = "response"))
+pairs(emmeans::emmeans(Binom_mod_early.est, ~ Year, type = "response"))
 ```
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
+## not the most normal residuals...
+
 plot(Binom_mod_early)
 ```
 
@@ -1122,17 +1396,43 @@ Seeded_early_all_mean$Treatment <- factor(Seeded_early_all_mean$Treatment, level
 
 early.cover.plot <-ggplot(data = Seeded_early_all_mean, aes(x = Year,  y = Mean_cover, fill = Treatment))+
   geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend =  TRUE)+
-  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover))+
-  scale_fill_manual(name = "Treatment", values=c("#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
-  labs(x = "Year", y = "Prop. seeded early cover")+
+  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover), size = .75)+
+  scale_fill_manual(name = "Treatment",
+                    breaks = c("NAT", "LE", "LL", "SIM"),
+                    labels = c("Natural","Summer first", "Fall first",  "Simultaneous"), 
+                    values=c("#F0E442",  "#009E73", "#56B4E9","#0072B2"))+
+  labs(x = "Year", y = "Prop. seeded summer cover")+
   theme_minimal()+
   theme(axis.text=element_text(size=16), axis.title = element_text(size = 12))+ 
   scale_y_continuous(breaks=seq(0, 0.7 ,by=.1), limits = c(0,0.7))+
   theme(legend.position = "none")+
-  theme_classic() +
-  theme(text=element_text(size=14))
+  theme_classic()  +
+  theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
   
 early.cover.plot
+```
+
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+
+
+ # early.cover.plot <- early.cover.plot +
+ #   annotate("text", x = .67, y = 0.07, label = "ad",
+ #           fontface =2, size = 5) +
+ #   annotate("text", x = 0.9, y = 0.12 , label = "b",
+ #            fontface =2, size = 5) +
+ #   annotate("text", x = 1.12 , y = 0.045, label = "a",
+ #            fontface =2, size = 5) +
+ #   annotate("text", x = 1.335 , y = 0.12, label = "b",
+ #            fontface =2, size = 5) +
+ #     annotate("text", x = 1.67, y =0.095, label = "d",
+ #              fontface =2, size = 5) +
+ #   annotate("text", x = 1.9, y = 0.295, label = "c",
+ #            fontface =2, size = 5) +
+ #   annotate("text", x = 2.12, y = 0.055, label = "ad",
+ #            fontface =2,size = 5) +
+ #   annotate("text", x = 2.335, y = 0.21, label = "e",
+ #            fontface =2, size = 5) 
 ```
 
 
@@ -1176,12 +1476,15 @@ Seeded_late_all_mean <-Total_Cover_Late %>%
 # no interaction between year and treatment 
 # Random effect does increase the amount of variance explained
 
-Binom_mod_late <- glmer(cbind(seeded_cover, tot_cover) ~ Treatment+Year+(1|Block), family = binomial, data = Total_Cover_Late)
+Binom_mod_late <- glmer(cbind(seeded_cover, tot_cover) ~ Treatment*Year+(1|Block), family = binomial, data = Total_Cover_Late)
 
 summary(Binom_mod_late)
 Anova(Binom_mod_late, type = 3)
 
-pairs(emmeans::emmeans(Binom_mod_late, ~ Treatment, type = "response"))
+
+Binom_mod_late.est <- glmer(cbind(seeded_cover, tot_cover) ~ Treatment+(1|Block), family = binomial, data = Total_Cover_Late)
+
+pairs(emmeans::emmeans(Binom_mod_late.est, ~ Treatment, type = "response"))
 ```
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
@@ -1198,46 +1501,195 @@ Seeded_late_all_mean$Treatment <- factor(Seeded_late_all_mean$Treatment, levels=
 
 late.cover.plot <- ggplot(data = Seeded_late_all_mean, aes(x = Year,  y = Mean_cover, fill = Treatment))+
   geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend = TRUE)+
-  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover))+
-  scale_fill_manual(name = "Treatment", values=c("#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
-  labs(x = "Year", y = "Prop. seeded late cover")+
+  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover), size = .75)+ scale_fill_manual(name = "Treatment",
+                    breaks = c("NAT", "LE", "LL", "SIM"),
+                    labels = c("Natural","Summer first", "Fall first",  "Simultaneous"), 
+                    values=c("#F0E442",  "#009E73", "#56B4E9",
+                             "#0072B2"))+
+  labs(x = "Year", y = "Prop. seeded fall cover")+
   theme(axis.text=element_text(size=16), axis.title = element_text(size = 12))+ 
   scale_y_continuous(breaks=seq(0, 0.7,by=.1), limits = c(0,0.7))+
   theme_classic() +
-  theme(text=element_text(size=14))
+  theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
 
 
 late.cover.plot
 ```
 
 
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+
+# late.cover.plot <- late.cover.plot +
+#    annotate("text", x = .67, y = 0.18, label = "a",
+#           fontface =2, size = 5) +
+#    annotate("text", x = 0.9, y = 0.165 , label = "a",
+#             fontface =2, size = 5) +
+#    annotate("text", x = 1.12 , y = 0.38, label = "b",
+#             fontface =2, size = 5) +
+#   annotate("text", x = 1.335 , y = 0.50, label = "b",
+#             fontface =2, size = 5) +
+#      annotate("text", x = 1.67, y =0.23, label = "a",
+#               fontface =2, size = 5) +
+#    annotate("text", x = 1.9, y = 0.18, label = "a",
+#             fontface =2, size = 5) +
+#    annotate("text", x = 2.12, y = 0.50, label = "b",
+#             fontface =2, size = 5) +
+#    annotate("text", x = 2.335, y = 0.54, label = "b",
+#             fontface =2, size = 5) 
+```
+
+
 ### Plot Panel
 
-```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 12, fig.height = 4}
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 4.5}
 
 seeded_cover_panel <- ggarrange(total.cover.plot, early.cover.plot, late.cover.plot,
 align='h', labels=c('A', 'B','C'), ncol = 3,
-common.legend = T, legend = "right")
+common.legend = T, legend = "bottom")
 
 seeded_cover_panel
 ```
 
+### Species specific differences
 
-## Community Analysis {.tabset}
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+Seeded_early2 <- Seeded_early %>% 
+  # only look at the last year
+  filter(Year == "2023") %>% 
+  # only look at species found in the last year
+  filter(SPP6 %in% c("ACHMIL","CORLAN", "KOEMAC", "VIOPED")) %>% 
+  filter(Treatment %in% c("LE", "LL")) %>% 
+  spread(key = "Treatment", value = "max_cover") 
 
-### RDA Ordination
+
+# For summer dispersing species, subtract LE (added first) - LL (added second) in the same block. Positive values means they had greater cover when added first, zero = no difference, and negative means greater cover when added second. 
+
+
+Seeded_early2$difference <- Seeded_early2$LE - Seeded_early2$LL
+
+
+
+Seeded_late2 <- Seeded_late %>% 
+  # only look at the last year
+  filter(Year == "2023") %>% 
+  # only look at species found in the last year
+  filter(SPP6 %in% c("LESCAP","MONFIS", "BIDARI","SORNUT", "HELMOL", "RATPIN", "PENDIG", "CHAFAS",  "ERYYUC", "CORTRI", "RUDHIR")) %>% 
+  filter(Treatment %in% c("LE", "LL")) %>% 
+  spread(key = "Treatment", value = "max_cover") 
+
+
+# For fall dispersing species, subtract LL (added first) - LE (added second) in the same block. Positive values means they had greater cover when added first, zero = no difference, and negative means greater cover when added second. 
+
+Seeded_late2$difference <- Seeded_late2$LL - Seeded_late2$LE
+
+test <- full_join(Seeded_early2, Seeded_late2)
+
+test2 <- left_join(test, species_list_PE)
+
+
+# Is the difference between added early and added late equal to 0 or significantly different from zero? 
+
+# If = 0, timing does not affect cover
+# If > 0, priority increases cover on average
+# If < 0, priority decreases cover on average
+
+# One sample t test 
+t.test(test2$difference)
+
+
+
+ggplot(data = test2, aes(x= difference)) +geom_density()
+
+
+lower_ci <- function(mean, se, n, conf_level = 0.95){
+  lower_ci <- mean - qt(1 - ((1 - conf_level) / 2), n - 1) * se
+}
+upper_ci <- function(mean, se, n, conf_level = 0.95){
+  upper_ci <- mean + qt(1 - ((1 - conf_level) / 2), n - 1) * se
+}
+
+
+test3 <- test2 %>% 
+  group_by(SPP6) %>%
+  summarise(smean = mean(difference, na.rm = TRUE),
+            ssd = sd(difference, na.rm = TRUE),
+            count = n()) %>%
+  mutate(se = ssd / sqrt(count),
+         lower_ci = lower_ci(smean, se, count),
+         upper_ci = upper_ci(smean, se, count))
+
+```
+
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 6}
+
+# Overall priority increased cover at the species level. However, this was mostly driven by a couple of dominate species including grey-headed coneflower, common yarrow, Indian grass, and June grass, and tall tickseed. 
+
+ggplot()+
+  geom_point(data = test3, aes(x = fct_reorder(SPP6, smean),  y = smean), size = 3)+
+  geom_jitter(data = test2, aes(x = SPP6, y = difference, color = Seeded), size = 2.5, alpha = 0.9) +
+  geom_point(data = test3, aes(x = fct_reorder(SPP6, smean),  y = smean), size = 2.5)+
+  geom_errorbar(data = test3, aes(x= SPP6, ymin = lower_ci , ymax = upper_ci), width = 0.4, size = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey20") +
+  ylim(-20, 42)+
+  theme_classic()+
+  labs(x = "Species", y = "Difference in cover (first - second)")+
+  annotate("text", x = 4, y = 40, label = "Greater cover when sown first", fontface = 2, size = 5)+
+  annotate("text", x = 12, y = -20, label = "Greater cover when sown second", fontface = 2, size = 5)+
+  theme(
+  text = element_text(size = 16, family = "Arial"),
+  axis.text = element_text(size = 14),
+  axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+  axis.title = element_text(size = 16),
+  legend.title = element_text(size = 16),
+  legend.text = element_text(size = 16),
+  )+
+  scale_color_manual(name = "Dispersal Guild", breaks = c("Fall", "Summer"),
+                         labels = c("Fall", "Summer"),
+                        values = c( "#56B4E9", "#009E73"))
+
+
+ 
+
+```
+
+
+
+
+
+##  Question 3: Does timing of species arrival influence species composition? {.tabset}
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+### set a basic theme 
+
+BioR.theme <- theme(
+panel.background = element_blank(),
+panel.border = element_blank(),
+panel.grid = element_blank(),
+axis.line = element_line("gray25"),
+text = element_text(size = 18, family="Arial"),
+axis.text = element_text(size = 18, colour = "gray25"),
+axis.title = element_text(size = 18, colour = "gray25", face = "bold"),
+legend.title = element_text(size = 18, face = "bold"),
+legend.text = element_text(size = 18),
+legend.key = element_blank())
+
+```
 
 
 
 ### Year: 2022
 
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 #Make a wide formatted dataset
 inner_wide_2022 <- inner_cover_max_reduced_lumped  %>%
   filter(Year %in% 2022) %>% 
+  group_by(Block, Treatment, SPP6) %>% 
+  summarize(max_cover = sum(max_cover)) %>% 
   spread(key="SPP6", value="max_cover") 
 
 #Replace NA values with 0
@@ -1245,60 +1697,196 @@ inner_wide_2022 <- inner_cover_max_reduced_lumped  %>%
 inner_wide_2022[is.na(inner_wide_2022)] <- 0 
 
 #Turn our dataset into a matrix 
-inner_wide_mat_2022 <- inner_wide_2022[,-c(1,2,3)]
+inner_wide_mat_2022 <- inner_wide_2022[,-c(1,2)]
 
 
 # labels
-inner_wide_labels_2022 <- inner_wide_2022[,c(1,2,3)]
+inner_wide_labels_2022 <- inner_wide_2022[,c(1,2)]
+
+## Bare ground dataset
+inner_bare_cover_2022 <- inner_bare_cover %>% 
+  filter(Year == "2022") %>% 
+  filter(Treatment != "2022") %>% 
+   rename("Bare_cover" = "max_cover") %>% 
+  select(-SPP6)
+
+## Light dataset
+
+light_2022 <- light_fall_2022 %>% 
+  filter(Treatment != "EMP") %>% 
+  group_by(Block, Treatment, Location) %>% 
+  summarize(Mean_Light = mean(Light))  %>% 
+  spread(key = Location , value = Mean_Light)
+
+## join
+
+env.data.2022.bare <- full_join(inner_wide_labels_2022, inner_bare_cover_2022) 
+
+env.data.2022 <- full_join(env.data.2022.bare, light_2022) 
+
+env.data.2022 <- env.data.2022 %>% 
+ unite(UniqueBlock, c(Treatment,Block), sep = "_", remove = FALSE)
+
+
+
+
+row.names(inner_wide_mat_2022 ) <- env.data.2022$UniqueBlock
+inner_wide_mat_2022 <- data.matrix(inner_wide_mat_2022 )
+
+
 
 # Standardize by max 
 
-inner.max.2022 <- decostand(inner_wide_mat_2022, "max")
+inner.hel.2022 <- decostand(inner_wide_mat_2022, "hellinger")
 
 
 ```
 
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+### fit a distance-based RDA 
+#### Allows you to do a constrained ordination using non-Euclidean distance measures such as Bray-curtis dissimilarity (which is fitting for our data on plant communities)
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-dimcheckMDS(inner.max.2022, distance = "bray", k=6, trymax= 20, autotransform = FALSE)
+#### it works by: 1) making the distance matrix based on your desired measure, 2) doing a PCoA, 3) taking the PCoA eigenvectors and putting them into an RDA.
+
+
+### Use the capscale function (not the dbRDA since it doesn't provide species scores)
+
+## Light and bare ground were not important predictors
+
+
+
+dbRDA.22 <- capscale(inner.hel.2022 ~ Treatment, data =env.data.2022 ,  dist="bray", add = TRUE)
+
+## dbRDA results
+dbRDA.22
+
+env.data.2022$Block <- as.factor(env.data.2022$Block)
+
+## PERMANOVA results
+
+anova(dbRDA.22, step = 1000, by = "terms", permu = 999)
+
+
+### Pair-wise comparisons
+
+BiodiversityR::multiconstrained(method = "capscale", inner.hel.2022  ~ Treatment, data = env.data.2022, by = "term", dist="bray", add = TRUE)
+
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+### Get the basic ordination plot 
+
+plot1 <- ordiplot(dbRDA.22, choices = c(1,2))
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+### extract the site information
+
+sites.long1 <- sites.long(plot1, env.data = env.data.2022)
+
+head(sites.long1)
+
+### extract the species information
+
+species.long1 <- species.long(plot1)
+species.long1
+
+### extract the first two axis info
+
+axis.long1 <- axis.long(dbRDA.22, choices = c(1,2))
+axis.long1 
+```
+
+
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+# Do an envfit to find influential speicies (p < 0.05)
+
+
+spec.envfit1 <- envfit(plot1, env=inner.hel.2022)
+spec.data.envfit1 <- data.frame(r=spec.envfit1$vectors$r, p=spec.envfit1$vectors$pvals)
+species.long1 <- species.long(plot1, spec.data=spec.data.envfit1)
+species.long1
+
+
+species.long.1 <- species.long1[species.long1$p < 0.01, ]
+species.long.1
+
+# Join influential species dataframe to species list information so we can later color species labels by seeded status
+
+species.long.1 <- species.long.1 %>% 
+  rename(SPP6 = "labels")
+
+species.long.1 <- left_join(species.long.1, species_list_PE, by = "SPP6")
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+# Get the vector information for environmental variables
+
+#vectors.envfit.22 <- envfit(plot1, env=env.data.2022)
+#vectors.long.1 <- vectorfit.long(vectors.envfit.22 )
+#vectors.long.1
 
 ```
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+# Get the ellipse information
 
-#metaMDS for maximum standardization
-#best solution converged several times at 3 dimensions
-
-inner.cover.2022.mds <- metaMDS(inner.max.2022, distance = "bray", autotransform = FALSE, try = 100, k =3)
+ordiplot(dbRDA.22, choices = c(1,2))
+Treatment.ellipses.22 <- ordiellipse(plot1, groups=env.data.2022$Treatment, display="sites", kind="sd")
+Treatment.ellipses.22.1 <- ordiellipse.long(Treatment.ellipses.22 , grouping.name="Treatment")
 ```
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 10}
 
-### Looks at which species were the most influential in driving the observed patterns
-inner.spp.fit.2022 <- envfit(inner.cover.2022.mds, inner.max.2022, permutations = 999, k =3)
-#head(inner.spp.fit.2022)
+# Plot it!
+
+
+dbRDA.2022.plot <- ggplot() + 
+    geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
+    geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +  
+    xlab(axis.long1[1, "label"]) +
+    ylab(axis.long1[2, "label"]) +  
+    scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+                         values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
+    scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+                         values = c(21, 22, 23, 24, 25))+
+  geom_polygon(data=Treatment.ellipses.22.1, 
+                   aes(x=axis1, y=axis2, fill=Treatment, alpha = 0.1), 
+              size=0.2, show.legend=FALSE) +
+  geom_point(data=sites.long1, 
+               aes(x=axis1, y=axis2, fill=Treatment, shape=Treatment), 
+               size=4.5) +
+  geom_segment(data=species.long.1, 
+                 aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
+                 colour="grey0", size=.8, alpha = 0.4) +
+  scale_color_manual(name = "Species", breaks = c("Fall", "Summer", "Unseeded", "Env."),
+                         labels = c("Seeded fall dispersing", "Seeded summer dispersing", "Unseeded", "Midstory light"),
+                         values = c("darkblue", "#003c00",  "#cc461b", "black"))+
+    geom_label_repel(data=species.long.1, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
+                   alpha = 0.5, 
+                   label.padding=.1, 
+                   na.rm=TRUE,
+                   seed = 1234) +
+    geom_label_repel(data=species.long.1, 
+                    aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size =  4.5,
+                   alpha = 1, 
+                   label.padding=.1, 
+                   fill = NA,
+                   na.rm=TRUE,
+                   seed = 1234) +
+    BioR.theme  +
+    coord_fixed(ratio=1)+
+  annotate("text", x = -1.5, y = 2, label = "Y1: 2022", size = 7, fontface =2)
+
+dbRDA.2022.plot
+
+
 ```
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-
-#ordiplot3d(inner.cover.mds)
-pl.2022 <- ordiplot3d(inner.cover.2022.mds, scaling = "symmetric", angle = 35, type="n")
-
-### Plots the points and gives a unique shape based on year and unique color based on treatment
-ordiellipse(pl.2022, groups = inner_wide_labels_2022$Treatment, label = F, draw = "polygon", lty = 1,col = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"),  conf = 0.95, kind = "se")
-
-# Draws 95% CI around the treatment groups (based on se)
-points(pl.2022,"points", pch = c(21, 22, 23, 24, 25) [as.factor(inner_wide_labels_2022$Treatment)], bg = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2") [as.factor(inner_wide_labels_2022$Treatment)], cex =1)
-
-
-### Legend so I can know what shapes and colors correspond to which groups
-legend("topright", legend = c("LE", "LL", "NAT", "NON", "SIM"),  pch = c(21, 22, 23, 24, 25), pt.bg = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"), bty = "n", cex = 1) 
-
-### Displays the type of standardization, Stress, and Dimensions used
-legend("topleft", c("Year: 2022", "Max Standardization", "Stress = 0.17", "K = 3"), bty = "n", cex = 0.75)
-
-```
 
 
 ### Year: 2023
@@ -1343,12 +1931,12 @@ env.data.2023 <- full_join(env.data.2023.bare, light_2023)
 
 # Standardize by max 
 
-inner.max.2023 <- decostand(inner_wide_mat_2023, "max")
+inner.hel.2023 <- decostand(inner_wide_mat_2023, "hellinger")
 
 ```
 
 
-```{r}
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 ### fit a distance-based RDA 
 #### Allows you to do a constrained ordination using non-Euclidean distance measures such as Bray-curtis dissimilarity (which is fitting for our data on plant communities)
 
@@ -1356,22 +1944,26 @@ inner.max.2023 <- decostand(inner_wide_mat_2023, "max")
 
 
 ### Use the capscale function (not the dbRDA since it doesn't provide species scores)
-dbRDA <- capscale(inner.max.2023 ~ Treatment+Middle, data = env.data.2023,  dist="bray")
+dbRDA <- capscale(inner.hel.2023 ~ Treatment, data = env.data.2023,  dist="bray", add = TRUE)
 
 ## dbRDA results
 dbRDA
 
 ## PERMANOVA results
-anova(dbRDA, step = 1000, by = "terms", permu = 200)
+anova(dbRDA, step = 1000, by = "terms", permu = 999)
+
+### Pair-wise comparisons
+
+BiodiversityR::multiconstrained(method = "capscale", inner.hel.2023 ~ Treatment+Middle, data = env.data.2023,  dist="bray", add = TRUE)
 ```
 
-```{r}
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 ### Get the basic ordination plot 
 
 plot2 <- ordiplot(dbRDA, choices = c(1,2))
 ```
 
-```{r}
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 ### extract the site information
 
 sites.long2 <- sites.long(plot2, env.data = env.data.2023)
@@ -1389,35 +1981,19 @@ axis.long2 <- axis.long(dbRDA, choices = c(1,2))
 axis.long2 
 ```
 
-```{r}
-
-### set a basic theme
-
-BioR.theme <- theme(
-panel.background = element_blank(),
-panel.border = element_blank(),
-panel.grid = element_blank(),
-axis.line = element_line("gray25"),
-text = element_text(size = 12, family="Arial"),
-axis.text = element_text(size = 10, colour = "gray25"),
-axis.title = element_text(size = 14, colour = "gray25"),
-legend.title = element_text(size = 14),
-legend.text = element_text(size = 14),
-legend.key = element_blank())
-```
 
 
-```{r}
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 # Do an envfit to find influential speicies (p < 0.05)
 
 
-spec.envfit <- envfit(plot2, env=inner.max.2023)
+spec.envfit <- envfit(plot2, env=inner.hel.2023)
 spec.data.envfit <- data.frame(r=spec.envfit$vectors$r, p=spec.envfit$vectors$pvals)
 species.long2 <- species.long(plot2, spec.data=spec.data.envfit)
 species.long2
 
 
-species.long3 <- species.long2[species.long2$p < 0.05, ]
+species.long3 <- species.long2[species.long2$p < 0.01, ]
 species.long3
 
 # Join influential species dataframe to species list information so we can later color species labels by seeded status
@@ -1426,20 +2002,17 @@ species.long3 <- species.long3 %>%
   rename(SPP6 = "labels")
 
 species.long3 <- left_join(species.long3, species_list_PE, by = "SPP6")
-```
 
-```{r}
-# Get the vector information for environmental variables
 
-vectors.envfit <- envfit(plot2, env=env.data.2023)
-vectors.long3 <- vectorfit.long(vectors.envfit)
-vectors.long3
 
 ```
 
-```{r}
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 # Get the ellipse information
 
+ordiplot(dbRDA, choices = c(1,2))
 Treatment.ellipses <- ordiellipse(plot2, groups=env.data.2023$Treatment, display="sites", kind="sd")
 Treatment.ellipses.long2 <- ordiellipse.long(Treatment.ellipses, grouping.name="Treatment")
 ```
@@ -1454,8 +2027,8 @@ dbRDA.2023.plot <- ggplot() +
     geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +  
     xlab(axis.long2[1, "label"]) +
     ylab(axis.long2[2, "label"]) +  
-    scale_x_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +
-    scale_y_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +  
+   # scale_x_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +
+   # scale_y_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +  
     scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
                          labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
                          values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
@@ -1467,165 +2040,42 @@ dbRDA.2023.plot <- ggplot() +
               size=0.2, show.legend=FALSE) +
   geom_point(data=sites.long2, 
                aes(x=axis1, y=axis2, fill=Treatment, shape=Treatment), 
-               size=4) +
+               size=4.5) +
   geom_segment(data=species.long3, 
                  aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
-                 colour="grey0", size=0.7, alpha = 0.3) +
-    geom_text_repel(data=species.long3, 
-                    aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 3.2)+
-  scale_color_manual(name = "Season", breaks = c("Fall", "Summer", "Unseeded"),
-                         labels = c("Fall", "Summer", "Unseeded"),
-                         values = c("darkblue", "darkgreen",  "#BE5504"))+
-    geom_segment(data=subset(vectors.long3, vector %in% c("Middle")),
-                 aes(x=0, y=0, xend=axis1*1, yend=axis2*1), 
-                 colour="black", size=0.7) +
-    geom_text_repel(data=subset(vectors.long3, vector %in% c("Middle")), 
-                    aes(x=axis1*1, y=axis2*1, label=vector),
-                    colour="black", size = 4.5) +
+                 colour="grey0", size=0.8, alpha = 0.4) +
+    geom_label_repel(data=species.long3, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
+                   alpha = 0.5, 
+                   label.padding=.1, 
+                   na.rm=TRUE,
+                   seed = 1234) +
+    geom_label_repel(data=species.long3, 
+                    aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size =  4.5,
+                   alpha = 1, 
+                   label.padding=.1, 
+                   fill = NA,
+                   na.rm=TRUE,
+                   seed = 1234) +
+  scale_color_manual(name = "Vectors", breaks = c("Fall", "Summer", "Unseeded", "Env."),
+                         labels = c("Seeded fall dispersing species", "Seeded summer dispersing species", "Unseeded species", "Midstory light"),
+                        values = c("darkblue", "#003c00",  "#cc461b", "black"))+
     BioR.theme  +
-    coord_fixed(ratio=1)
+    coord_fixed(ratio=1)+
+  annotate("text", x = -2.5, y = 2.5, label = "Y2: 2023", size = 7, fontface =2)
+
 
 dbRDA.2023.plot
 ```
 
 
-### All
+### Plot Panel
 
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 12, fig.height = 12}
 
-# Standardize by max 
+RDA_panel <- ggarrange(dbRDA.2022.plot, dbRDA.2023.plot,
+align='h', labels=c('A', 'B'), ncol = 1,
+common.legend = T, legend = "right", font.label = list(size = 20))
 
-inner.max <- decostand(inner_wide_mat, "max")
+RDA_panel
 ```
 
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-# Check the stress at various dimensions using bray-curtis dissimilarity
-## stress = 0.1718204 in 3 dimensions
-## Stress was far too high in 2 dimensions - 
-
-fig <- dimcheckMDS(inner.max, distance = "bray", k=6, trymax= 20, autotransform = FALSE)
-```
-
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-fig
-```
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-#metaMDS for maximum standardization
-#best solution converged several times at 3 dimensions
-
-inner.cover.mds <- metaMDS(inner.max, distance = "bray", autotransform = FALSE, trymax =50, k =3)
-```
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-#### Take the full inner cover dataset and only keep the labels (year, block, treatment, ID)
-#### This will be useful in grouping points in the NMDS and running the PERMANOVA latter on
-
-
-#joined_inner_cover_2022_data <- joined_inner_cover_2022 %>% 
-  #group_by(UniqueBlock, Block, Treatment) %>% 
-  #summarise(Percent_Cover = sum(max_cover)) %>% 
- # select(-Percent_Cover)
-
-```
-
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-### Looks at which species were the most influential in driving the observed patterns
-inner.spp.fit <- envfit(inner.cover.mds, inner.max, permutations = 999, k =3)
-#head(inner.spp.fit)
-```
-
-
-```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-inner_wide.labs$Treatment_Year <- paste(inner_wide.labs$Treatment, inner_wide.labs$Year, sep="_")
-
-#ordiplot3d(inner.cover.mds)
-pl <- ordiplot3d(inner.cover.mds, scaling = "symmetric", angle = 35, type="n")
-
-### Plots the points and gives a unique shape based on year and unique color based on treatment
-ordiellipse(pl, groups = inner_wide.labs$Treatment, label = F, draw = "polygon", lty = 1,col = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"),  conf = 0.95, kind = "se")
-
-# Draws 95% CI around the treatment groups (based on se)
-points(pl,"points", pch = c(21, 22, 23, 24, 25) [as.factor(inner_wide.labs$Treatment)], bg = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2") [as.factor(inner_wide.labs$Treatment)], cex =1)
-
-
-### Legend so I can know what shapes and colors correspond to which groups
-legend("topright", legend = c("LE", "LL", "NAT", "NON", "SIM"),  pch = c(21, 22, 23, 24, 25), pt.bg = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"), bty = "n", cex = 1) 
-
-### Displays the type of standardization, Stress, and Dimensions used
-legend("topleft", c("Max Standardization", "Stress = 0.17", "K = 3"), bty = "n", cex = 1)
-
-```
-
-
-## PERMANOVA
-
-PERMANOVA analysis revealed that treatment did have a significant effect on plant community composition. Treatment also explained ~ 20% of the variation in the plant community. Post-hoc analysis shows that LE, NON, and NAT treatments were not significantly different from each other but did differ in plant community composition compared to the SIM and LL seeding treatments.  Additionally, the SIM and LL treatments were only marginally different (p = 0.053). Based on the NMDS above, the LL plant community appears as a subset of the SIM plant community. Despite receiving the same pool of seeded species, species added to the plots later in the growing season did not establish as well. Barriers to establishment also appeared higher for spring/summer dispersing species compared to fall dispersing species, particularly when added without priority. 
-
-
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-
-### PERMANOVA analysis predicting the community based on year and treatment with block as a random effect
-### At least on treatment sig. different from the others
-### Not exactly sure how to specify the strata...? ***Ask Lauren***
-
-inner_wide$Block <- as.factor(inner_wide$Block )
-
-adonis2(inner.max ~ Treatment+Year, data=inner_wide, method = "bray", permutations=1000)
-
-
-### Treatments
-### LE != LL < 0.001
-### LE != SIM < 0.001
-### LL != NAT < 0.05
-### LL != NON < 0.001
-### NAT != SIM < 0.001
-### NON != SIM < 0.001
-
-
-pairwise.adonis2(inner.max  ~ Treatment+Year, method = "bray", data=inner_wide)
-
-```
-
-
-### Weather data
-
-```{r}
-# Precipitation
-
-
-
-month_tot <- weather %>% 
-  filter(Year != "2021") %>% 
-  group_by(Month, Year) %>% 
-  summarize(tot_month_PRP_mm = sum(Total_PRP_mm))
-
-year_tot <- weather %>% 
-  filter(Year != "2021") %>% 
-  group_by(Year) %>% 
-  summarize(tot_PRP_mm = sum(Total_PRP_mm))
-
-library(mosaic)
-
-favstats(year_tot$tot_PRP_mm)
-```
-
-```{r}
-# Average air temperature
-
-
-library(mosaic)
-
-favstats(weather$Average_Air_Temp_C)
-```
-
-
-
-  
