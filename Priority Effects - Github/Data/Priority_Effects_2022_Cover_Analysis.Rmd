@@ -752,18 +752,23 @@ Summary_table$Treatment <- factor(Summary_table$Treatment, levels=c("LE", "LL", 
 
 # Normal interaction model
 
-Mean_C.mod.lm.interaction <- lm(Mean_C~Treatment*Year, data =Summary_table)
+
+### Interaction was n.s.
+
+# Mean_C.mod.lm.interaction <- lm(Mean_C~Treatment*Year, data =Summary_table)
+
+ Mean_C.mod.lm.additive <- lm(Mean_C~Treatment+Year, data =Summary_table)
 
 ## Summary results
 
-summary(Mean_C.mod.lm.interaction)
+summary( Mean_C.mod.lm.additive )
 
 ```
 
 
 ```{r}
 # Residual plot looks decent
-plot(Mean_C.mod.lm.interaction)
+plot(Mean_C.mod.lm.additive)
 
 ```
 
@@ -772,8 +777,7 @@ Analysis of variance (type III) revealed that seeding treatment was the only sig
 ```{r, echo = FALSE, message = FALSE}
 ## ANOVA type 3
 
-Anova(Mean_C.mod.lm.interaction, type = 3)
-
+Anova(Mean_C.mod.lm.additive, type = 3)
 ```
 
 Posthoc analysis indicated that all seeding treatments increased mean c value compared to unseeded plots. Seeding all species in one addition produced more conservative communities than treatments that seeded summer dispersing species first followed by fall dispersing species. Even though seeding only the fall dispersing species first produced higher quality communities than those that seeded species with natural timing, there was no difference in mean c between the seeding treatments that had two lumped additions. 
@@ -903,7 +907,7 @@ Overall, model fit was decent. For example, $R^{2}_{GLMM(m)}$ (i.e., the varianc
 # Model Fitting
 
 
-SR.mod.normal <- lmer(Species_richness~Treatment*Year+(1|Block), data =Summary_table)
+SR.mod.normal <- lmer(Species_richness~Treatment+Year+(1|Block), data =Summary_table)
 summary(SR.mod.normal)
 
 ## Marginal R^2 (variance explained by ONLY fixed effects) = 0.47437
@@ -911,6 +915,7 @@ summary(SR.mod.normal)
 
 ## Inclusion of the random effect increased model fit 
 
+## interaction n.s.
 
 r.squaredGLMM(SR.mod.normal)
 ```
@@ -1071,7 +1076,7 @@ ggqqplot(Summary_table, "Shannon", ggtheme = theme_bw()) +
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 
-Shannon.lmer.mod <- lmer(Shannon~Treatment*Year+(1|Block), data =Summary_table)
+Shannon.lmer.mod <- lmer(Shannon~Treatment+Year+(1|Block), data =Summary_table)
 summary(Shannon.lmer.mod)
 Anova(Shannon.lmer.mod, type = 3)
 
@@ -1144,9 +1149,9 @@ sdi.plot_treatment <- sdi.plot_treatment  +
            fontface =2, size = 5) +
    annotate("text", x = 2, y = 2.6, label = "ab",
             fontface =2, size = 5) +
-   annotate("text", x = 3 , y = 2.6, label = "b",
+   annotate("text", x = 3 , y = 2.6, label = "bc",
             fontface =2, size = 5) +
-   annotate("text", x = 4, y = 2.75, label = "b",
+   annotate("text", x = 4, y = 2.75, label = "bc",
             fontface =2, size = 5) +
      annotate("text", x = 5, y =2.85, label = "c",
               fontface =2, size = 5)
@@ -1251,10 +1256,10 @@ summary(Binom_mod)
 Anova(Binom_mod, type = 3)
 
 ## posthoc test
-pairs(emmeans::emmeans(Binom_mod , ~ Treatment*Year, type = "response"))
+pairs(emmeans::emmeans(Binom_mod , ~ Treatment*Year, type = "response", adjust = "tukey"))
 
-pairs(emmeans::emmeans(Binom_mod , ~ Treatment, type = "response"))
-pairs(emmeans::emmeans(Binom_mod , ~ Year, type = "response"))
+pairs(emmeans::emmeans(Binom_mod , ~ Treatment, type = "response", adjust = "tukey"))
+pairs(emmeans::emmeans(Binom_mod , ~ Year, type = "response", adjust = "tukey"))
 ```
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
@@ -1366,7 +1371,7 @@ Seeded_early_all_mean <- Total_Cover_Early %>%
 # no interaction between year and treatment 
 # Random effect does not increase the amount of variance explained and results in singular fit
 
-Binom_mod_early <- glm(cbind(seeded_cover, tot_cover) ~ Treatment*Year, family = binomial, data = Total_Cover_Early)
+Binom_mod_early <- glm(cbind(seeded_cover, tot_cover) ~ Treatment+Year, family = binomial, data = Total_Cover_Early)
 
 summary(Binom_mod_early)
 Anova(Binom_mod_early, type = 3)
@@ -1377,8 +1382,8 @@ Anova(Binom_mod_early, type = 3)
 
 Binom_mod_early.est <- glm(cbind(seeded_cover, tot_cover) ~ Treatment+Year, family = binomial, data = Total_Cover_Early)
 
-pairs(emmeans::emmeans(Binom_mod_early.est, ~ Treatment, type = "response"))
-pairs(emmeans::emmeans(Binom_mod_early.est, ~ Year, type = "response"))
+pairs(emmeans::emmeans(Binom_mod_early.est, ~ Treatment, type = "response", adjust = "tukey"))
+pairs(emmeans::emmeans(Binom_mod_early.est, ~ Year, type = "response",  adjust = "tukey"))
 ```
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
@@ -1476,15 +1481,16 @@ Seeded_late_all_mean <-Total_Cover_Late %>%
 # no interaction between year and treatment 
 # Random effect does increase the amount of variance explained
 
-Binom_mod_late <- glmer(cbind(seeded_cover, tot_cover) ~ Treatment*Year+(1|Block), family = binomial, data = Total_Cover_Late)
+Binom_mod_late <- glmer(cbind(seeded_cover, tot_cover) ~ Treatment+Year+(1|Block), family = binomial, data = Total_Cover_Late)
 
 summary(Binom_mod_late)
 Anova(Binom_mod_late, type = 3)
 
 
-Binom_mod_late.est <- glmer(cbind(seeded_cover, tot_cover) ~ Treatment+(1|Block), family = binomial, data = Total_Cover_Late)
+Binom_mod_late.est <- glmer(cbind(seeded_cover, tot_cover) ~ Treatment+Year+(1|Block), family = binomial, data = Total_Cover_Late)
 
-pairs(emmeans::emmeans(Binom_mod_late.est, ~ Treatment, type = "response"))
+pairs(emmeans::emmeans(Binom_mod_late.est, ~ Treatment, type = "response", adjust = "tukey"))
+pairs(emmeans::emmeans(Binom_mod_late.est, ~ Year, type = "response", adjust = "tukey"))
 ```
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
@@ -1656,7 +1662,9 @@ ggplot()+
 
 
 
-##  Question 3: Does timing of species arrival influence species composition? {.tabset}
+##  Question 3: Does timing of species arrival influence species composition? - Bray-Curtis {.tabset}
+
+
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
@@ -2079,3 +2087,409 @@ common.legend = T, legend = "right", font.label = list(size = 20))
 RDA_panel
 ```
 
+
+##  Question 3b: Does timing of species arrival influence species composition? - Jaccard {.tabset}
+
+
+
+
+### Year: 2022
+
+
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#Make a wide formatted dataset
+inner_wide_2022 <- inner_cover_max_reduced_lumped  %>%
+  filter(Year %in% 2022) %>% 
+  group_by(Block, Treatment, SPP6) %>% 
+  summarize(max_cover = sum(max_cover)) %>% 
+  spread(key="SPP6", value="max_cover") 
+
+#Replace NA values with 0
+
+inner_wide_2022[is.na(inner_wide_2022)] <- 0 
+
+#Turn our dataset into a matrix 
+inner_wide_mat_2022 <- inner_wide_2022[,-c(1,2)]
+
+
+# labels
+inner_wide_labels_2022 <- inner_wide_2022[,c(1,2)]
+
+## Bare ground dataset
+inner_bare_cover_2022 <- inner_bare_cover %>% 
+  filter(Year == "2022") %>% 
+  filter(Treatment != "2022") %>% 
+   rename("Bare_cover" = "max_cover") %>% 
+  select(-SPP6)
+
+## Light dataset
+
+light_2022 <- light_fall_2022 %>% 
+  filter(Treatment != "EMP") %>% 
+  group_by(Block, Treatment, Location) %>% 
+  summarize(Mean_Light = mean(Light))  %>% 
+  spread(key = Location , value = Mean_Light)
+
+## join
+
+env.data.2022.bare <- full_join(inner_wide_labels_2022, inner_bare_cover_2022) 
+
+env.data.2022 <- full_join(env.data.2022.bare, light_2022) 
+
+env.data.2022 <- env.data.2022 %>% 
+ unite(UniqueBlock, c(Treatment,Block), sep = "_", remove = FALSE)
+
+
+
+
+row.names(inner_wide_mat_2022 ) <- env.data.2022$UniqueBlock
+inner_wide_mat_2022 <- data.matrix(inner_wide_mat_2022 )
+
+
+
+# Standardize by pa 
+
+inner.pa.2022 <- decostand(inner_wide_mat_2022, "pa")
+
+
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+### fit a distance-based RDA 
+#### Allows you to do a constrained ordination using non-Euclidean distance measures such as Bray-curtis dissimilarity (which is fitting for our data on plant communities)
+
+#### it works by: 1) making the distance matrix based on your desired measure, 2) doing a PCoA, 3) taking the PCoA eigenvectors and putting them into an RDA.
+
+
+### Use the capscale function (not the dbRDA since it doesn't provide species scores)
+
+## Light and bare ground were not important predictors
+
+
+
+dbRDA.22.jac <- capscale(inner.pa.2022 ~ Treatment, data =env.data.2022 ,  dist="jaccard", add = TRUE)
+
+## dbRDA results
+dbRDA.22.jac
+
+env.data.2022$Block <- as.factor(env.data.2022$Block)
+
+## PERMANOVA results
+
+anova(dbRDA.22.jac, step = 1000, by = "terms", permu = 999)
+
+
+### Pair-wise comparisons
+
+BiodiversityR::multiconstrained(method = "capscale", inner.pa.2022  ~ Treatment, data = env.data.2022, by = "term", dist="jaccard", add = TRUE)
+
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+### Get the basic ordination plot 
+
+plot1 <- ordiplot(dbRDA.22.jac, choices = c(1,2))
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+### extract the site information
+
+sites.long1 <- sites.long(plot1, env.data = env.data.2022)
+
+head(sites.long1)
+
+### extract the species information
+
+species.long1 <- species.long(plot1)
+species.long1
+
+### extract the first two axis info
+
+axis.long1 <- axis.long(dbRDA.22.jac, choices = c(1,2))
+axis.long1 
+```
+
+
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+# Do an envfit to find influential speicies (p < 0.05)
+
+
+spec.envfit1 <- envfit(plot1, env=inner.pa.2022)
+spec.data.envfit1 <- data.frame(r=spec.envfit1$vectors$r, p=spec.envfit1$vectors$pvals)
+species.long1 <- species.long(plot1, spec.data=spec.data.envfit1)
+species.long1
+
+
+species.long.1 <- species.long1[species.long1$p < 0.01, ]
+species.long.1
+
+# Join influential species dataframe to species list information so we can later color species labels by seeded status
+
+species.long.1 <- species.long.1 %>% 
+  rename(SPP6 = "labels")
+
+species.long.1 <- left_join(species.long.1, species_list_PE, by = "SPP6")
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+# Get the vector information for environmental variables
+
+#vectors.envfit.22 <- envfit(plot1, env=env.data.2022)
+#vectors.long.1 <- vectorfit.long(vectors.envfit.22 )
+#vectors.long.1
+
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+# Get the ellipse information
+
+ordiplot(dbRDA.22.jac, choices = c(1,2))
+Treatment.ellipses.22 <- ordiellipse(plot1, groups=env.data.2022$Treatment, display="sites", kind="sd")
+Treatment.ellipses.22.1 <- ordiellipse.long(Treatment.ellipses.22 , grouping.name="Treatment")
+```
+
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 10}
+
+# Plot it!
+
+
+dbRDA.2022.plot.jac <- ggplot() + 
+    geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
+    geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +  
+    xlab(axis.long1[1, "label"]) +
+    ylab(axis.long1[2, "label"]) +  
+    scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+                         values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
+    scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+                         values = c(21, 22, 23, 24, 25))+
+  geom_polygon(data=Treatment.ellipses.22.1, 
+                   aes(x=axis1, y=axis2, fill=Treatment, alpha = 0.1), 
+              size=0.2, show.legend=FALSE) +
+  geom_point(data=sites.long1, 
+               aes(x=axis1, y=axis2, fill=Treatment, shape=Treatment), 
+               size=4.5) +
+  geom_segment(data=species.long.1, 
+                 aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
+                 colour="grey0", size=.8, alpha = 0.4) +
+  scale_color_manual(name = "Species", breaks = c("Fall", "Summer", "Unseeded", "Env."),
+                         labels = c("Seeded fall dispersing", "Seeded summer dispersing", "Unseeded", "Midstory light"),
+                         values = c("darkblue", "#003c00",  "#cc461b", "black"))+
+    geom_label_repel(data=species.long.1, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
+                   alpha = 0.5, 
+                   label.padding=.1, 
+                   na.rm=TRUE,
+                   seed = 1234) +
+    geom_label_repel(data=species.long.1, 
+                    aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size =  4.5,
+                   alpha = 1, 
+                   label.padding=.1, 
+                   fill = NA,
+                   na.rm=TRUE,
+                   seed = 1234) +
+    BioR.theme  +
+    coord_fixed(ratio=1)+
+  annotate("text", x = -1.5, y = 2, label = "Y1: 2022", size = 7, fontface =2)
+
+dbRDA.2022.plot.jac
+
+
+```
+
+
+
+### Year: 2023
+
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 12, fig.height = 4}
+
+#Make a wide formatted dataset
+inner_wide_2023 <- inner_cover_max_reduced_lumped  %>%
+  filter(Year %in% 2023) %>% 
+  spread(key="SPP6", value="max_cover") 
+
+#Replace NA values with 0
+
+inner_wide_2023[is.na(inner_wide_2023)] <- 0 
+
+#Turn our dataset into a matrix 
+inner_wide_mat_2023 <- inner_wide_2023[,-c(1,2,3)]
+
+# make new dataset for labels & envdata
+
+## get the treatment labels
+inner_wide_labels_2023 <- inner_wide_2023[,c(1,2,3)]
+
+## Bare ground dataset
+inner_bare_cover_2023 <- inner_bare_cover %>% 
+  filter(Year == "2023") %>% 
+   rename("Bare_cover" = "max_cover") %>% 
+  select(-SPP6)
+
+## Light dataset
+
+light_2023 <- light_fall_2023 %>% 
+  group_by(Block, Treatment, Location) %>% 
+  summarize(Mean_Light = mean(Light)) %>% 
+  spread(key = Location , value = Mean_Light)
+
+## join
+
+env.data.2023.bare <- full_join(inner_wide_labels_2023, inner_bare_cover_2023) 
+
+env.data.2023 <- full_join(env.data.2023.bare, light_2023)
+
+# Standardize by max 
+
+inner.pa.2023 <- decostand(inner_wide_mat_2023, "pa")
+
+```
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+### fit a distance-based RDA 
+#### Allows you to do a constrained ordination using non-Euclidean distance measures such as Bray-curtis dissimilarity (which is fitting for our data on plant communities)
+
+#### it works by: 1) making the distance matrix based on your desired measure, 2) doing a PCoA, 3) taking the PCoA eigenvectors and putting them into an RDA.
+
+
+### Use the capscale function (not the dbRDA since it doesn't provide species scores)
+dbRDA.jac <- capscale(inner.pa.2023  ~ Treatment, data = env.data.2023,  dist="jaccard", add = TRUE)
+
+## dbRDA results
+dbRDA.jac
+
+## PERMANOVA results
+anova(dbRDA.jac, step = 1000, by = "terms", permu = 999)
+
+### Pair-wise comparisons
+
+BiodiversityR::multiconstrained(method = "capscale", inner.pa.2023  ~ Treatment, data = env.data.2023,  dist="jaccard", add = TRUE)
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+### Get the basic ordination plot 
+
+plot2 <- ordiplot(dbRDA.jac, choices = c(1,2))
+```
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+### extract the site information
+
+sites.long2 <- sites.long(plot2, env.data = env.data.2023)
+
+head(sites.long2)
+
+### extract the species information
+
+species.long2 <- species.long(plot2)
+species.long2
+
+### extract the first two axis info
+
+axis.long2 <- axis.long(dbRDA.jac, choices = c(1,2))
+axis.long2 
+```
+
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+# Do an envfit to find influential speicies (p < 0.05)
+
+
+spec.envfit <- envfit(plot2, env=inner.pa.2023)
+spec.data.envfit <- data.frame(r=spec.envfit$vectors$r, p=spec.envfit$vectors$pvals)
+species.long2 <- species.long(plot2, spec.data=spec.data.envfit)
+species.long2
+
+
+species.long3 <- species.long2[species.long2$p < 0.01, ]
+species.long3
+
+# Join influential species dataframe to species list information so we can later color species labels by seeded status
+
+species.long3 <- species.long3 %>% 
+  rename(SPP6 = "labels")
+
+species.long3 <- left_join(species.long3, species_list_PE, by = "SPP6")
+
+
+
+```
+
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+# Get the ellipse information
+
+ordiplot(dbRDA.jac, choices = c(1,2))
+Treatment.ellipses <- ordiellipse(plot2, groups=env.data.2023$Treatment, display="sites", kind="sd")
+Treatment.ellipses.long2 <- ordiellipse.long(Treatment.ellipses, grouping.name="Treatment")
+```
+
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 10}
+
+# Plot it!
+
+
+dbRDA.2023.plot.jac <- ggplot() + 
+    geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
+    geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +  
+    xlab(axis.long2[1, "label"]) +
+    ylab(axis.long2[2, "label"]) +  
+   # scale_x_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +
+   # scale_y_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +  
+    scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+                         values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
+    scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+                         values = c(21, 22, 23, 24, 25))+
+    geom_polygon(data=Treatment.ellipses.long2, 
+                   aes(x=axis1, y=axis2, fill=Treatment, alpha = 0.1), 
+              size=0.2, show.legend=FALSE) +
+  geom_point(data=sites.long2, 
+               aes(x=axis1, y=axis2, fill=Treatment, shape=Treatment), 
+               size=4.5) +
+  geom_segment(data=species.long3, 
+                 aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
+                 colour="grey0", size=0.8, alpha = 0.4) +
+    geom_label_repel(data=species.long3, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
+                   alpha = 0.5, 
+                   label.padding=.1, 
+                   na.rm=TRUE,
+                   seed = 1234) +
+    geom_label_repel(data=species.long3, 
+                    aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size =  4.5,
+                   alpha = 1, 
+                   label.padding=.1, 
+                   fill = NA,
+                   na.rm=TRUE,
+                   seed = 1234) +
+  scale_color_manual(name = "Vectors", breaks = c("Fall", "Summer", "Unseeded", "Env."),
+                         labels = c("Seeded fall dispersing species", "Seeded summer dispersing species", "Unseeded species", "Midstory light"),
+                        values = c("darkblue", "#003c00",  "#cc461b", "black"))+
+    BioR.theme  +
+    coord_fixed(ratio=1)+
+  annotate("text", x = -2.5, y = 2.5, label = "Y2: 2023", size = 7, fontface =2)
+
+
+dbRDA.2023.plot.jac
+```
+
+
+### Plot Panel
+
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 12, fig.height = 12}
+
+RDA_panel.jac <- ggarrange(dbRDA.2022.plot.jac, dbRDA.2023.plot.jac,
+align='h', labels=c('A', 'B'), ncol = 1,
+common.legend = T, legend = "right", font.label = list(size = 20))
+
+RDA_panel.jac
+```
