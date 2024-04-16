@@ -701,7 +701,7 @@ Distribution of C values for all treatments were right skewed, indicating the ma
 
 # Make a histogram showing the distribution of c values in each treatment
 
-ggplot(data = C_hist, aes(x= C_Value, fill = Year)) +geom_density(bins =30, alpha =0.4) +facet_wrap(~Treatment) + scale_x_continuous(breaks = seq(0, 10, 1))
+ggplot(data = C_hist, aes(x= C_Value, fill = Year)) +geom_density(bins =30, alpha =0.4) + facet_wrap(~Treatment) + scale_x_continuous(breaks = seq(0, 10, 1))
 ```
 
 Generally, mean C values were normally distributed with few extreme outliers, suggesting we can use a linear model to predict mean c as a function of treatment and year. 
@@ -808,7 +808,7 @@ Overall, seeding fall dispersing species early either as part of one simultaneou
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
 Summary_table_lumped <- Summary_table %>% 
-  group_by(Treatment) %>%   
+  group_by(Treatment, Year) %>%   
   summarise(Mean_C_t = mean(Mean_C), SD_C = sd(Mean_C), mean_richness = mean(Species_richness), SD_richness = sd(Species_richness), mean_Shannon = mean(Shannon), SD_Shannon = sd(Shannon))
   
 Summary_table_lumped <- Summary_table_lumped %>% 
@@ -869,6 +869,12 @@ SIM treatments had the greatest species richness compared to all other treatment
 Overall, species richness follows a normal distribution despite being count data. There were a couple of outliers in the natural seeding treatment but this is likely alright. 
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+Summary_table_lumped <- Summary_table_lumped %>% 
+  filter(Treatment != "NON")
+
+Summary_table <- Summary_table %>% 
+  filter(Treatment != "NON")
 
 # A couple of outliers in the NAT treatment but likely alright since the variability in outcomes seems to be a characteristic of NAT
 
@@ -1001,45 +1007,420 @@ pairs(est.lmer.SR.treatment, adjust = "tukey")
 Overall, seeding all species at the same time produced communities with the greatest species richness. For the most part, seeding increased species richness
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+set.seed(5)
 
-Summary_table_lumped$Treatment <- factor(Summary_table_lumped$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+Summary_table_lumped$Treatment <- factor(Summary_table_lumped$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
 
-Summary_table$Treatment <- factor(Summary_table$Treatment, levels=c("NON", "NAT", "LE", "LL", "SIM"))
+Summary_table$Treatment <- factor(Summary_table$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
 
 lower.sr.treatment <- Summary_table_lumped$SR_Mean - Summary_table_lumped$SR_SD
 upper.sr.treatment <- Summary_table_lumped$SR_Mean + Summary_table_lumped$SR_SD
 
 sr.plot_treatment <-   ggplot()+
-  geom_jitter(data = Summary_table, aes(x = Treatment, y = Species_richness, fill = Treatment, shape = Treatment), alpha = 0.8, size = 3)+
-    geom_errorbar(data = Summary_table_lumped, aes(x = Treatment, y = SR_Mean, ymin = lower.sr.treatment , ymax = upper.sr.treatment), width = 0.35, size = .75)+
-geom_point(data = Summary_table_lumped, size = 4.5, aes(x = Treatment, y = SR_Mean, shape = Treatment), fill = "black")+
-  labs(y = "Species richness", x = "" )+
+  geom_jitter(data = Summary_table, 
+              aes(x = Year, y = Species_richness, group = Treatment, 
+                  fill = Treatment, shape = Treatment),
+              alpha = 0.8, size = 3.5, position = position_jitterdodge(dodge.width = 0.75))+
+  geom_errorbar(data = Summary_table_lumped, 
+                aes(x = Year, group = Treatment,
+                    y = SR_Mean, ymin = lower.sr.treatment , ymax = upper.sr.treatment), 
+                position= position_dodge(width = .85), width = 0.5, size = 0.75,
+                show_guide=FALSE)+
+  geom_point(data = Summary_table_lumped, 
+             size = 4.5, aes(x = Year, y = SR_Mean, group = Treatment, 
+                             fill = Treatment, shape = Treatment),
+             fill = "black", position= position_dodge(width = 0.85),
+             show_guide=FALSE)+
+  labs(y = "Total richness", x = "" )+
   theme_classic() +
-  theme(text=element_text(size=16), legend.key.size=unit(1, "cm"), legend.position="none",  axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1, size = 14), axis.text.y = element_text(size = 14))+
-  scale_x_discrete(breaks = c("LE", "LL", "NAT", "NON", "SIM"),  labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"))+
-  scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),  labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"), values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
-scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"), labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"), values=c(21, 22,23, 24, 25))+
-ylim(10,32)
+  theme(text=element_text(size=18), 
+        legend.key.size=unit(0.5, "cm"),
+        legend.position="right", 
+        axis.text.x = element_text(size = 16),
+        axis.text.y = element_text(size = 16))+
+  scale_fill_manual(name = "",
+                    breaks = c("LE", "LL", "NAT", "SIM"),  
+                    labels = c("Summer first", "Fall first", "Natural","Simultaneous"), 
+                    values = c("#009E73", "#56B4E9",  "#F0E442", "#0072B2"))+
+  scale_shape_manual(name = "",
+                   breaks = c("LE", "LL", "NAT", "SIM"),
+                   labels = c("Summer first", "Fall first", "Natural", "Simultaneous"), 
+                   values=c(21, 22,23, 25))+
+  scale_y_continuous(breaks = seq(10, 30, by = 5),
+                     limits = c(10, 33))
 
 
+sr.plot_treatment <- sr.plot_treatment +
+  annotate("text", x = 1.2, y = 33, label = "Treatment: p < 0.001***",
+           fontface =2, size = 4)+
+  annotate("text", x = .96, y = 31.5, label = "Year: p < 0.05*",
+           fontface =2, size = 4)
 
-sr.plot_treatment 
+
 ```
+
 
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
-set.seed(5)
-sr.plot_treatment  <- sr.plot_treatment  + annotate("text", x = 1, y = 22, label = "a",
-           fontface =2, size = 5) +
-   annotate("text", x = 2, y = 24.5, label = "b",
-            fontface =2, size = 5) +
-   annotate("text", x = 3 , y = 27.5, label = "bc",
-            fontface =2, size = 5) +
-   annotate("text", x = 4, y = 27.5, label = "cd",
-            fontface =2, size = 5) +
-     annotate("text", x = 5, y =31, label = "d",
-              fontface =2, size = 5)
+# set.seed(5)
+# sr.plot_treatment  <- sr.plot_treatment  + annotate("text", x = 1, y = 22, label = "a",
+#            fontface =2, size = 5) +
+#    annotate("text", x = 2, y = 24.5, label = "b",
+#             fontface =2, size = 5) +
+#    annotate("text", x = 3 , y = 27.5, label = "bc",
+#             fontface =2, size = 5) +
+#    annotate("text", x = 4, y = 27.5, label = "cd",
+#             fontface =2, size = 5) +
+#      annotate("text", x = 5, y =31, label = "d",
+#               fontface =2, size = 5)
 
 ```
+
+
+#### Summer-Dispersing 
+
+
+```{r}
+### Filter out everything that isn't a seeded summer-dispersing species
+
+inner_long <- inner_wide %>% 
+  gather(key = "SPP6", value = "max_cover", ACAVIR:VIOPED) 
+
+Sown_species_ID <- left_join(inner_long,  species_list_PE)
+
+SR_summer <- Sown_species_ID  %>% 
+  group_by(Block, Treatment, Year) %>% 
+  filter(Seeded == "Summer" & max_cover > 0 & Treatment != "NON") %>% 
+  summarize(Summer_SR = n_distinct(SPP6))
+
+
+SR_summer_zero <- Sown_species_ID  %>% 
+  group_by(Block, Treatment, Year) %>% 
+  filter(Seeded == "Summer" & Treatment != "NON") %>% 
+  summarise(max_cover = sum(max_cover))
+  
+SR_summer_zero <- SR_summer_zero  %>% 
+  filter(max_cover == 0) 
+
+
+SR_summer_zero <- SR_summer_zero [,c(1,2,3)]
+SR_summer_zero$Summer_SR <- rep(0, nrow(SR_summer_zero))
+
+
+SR_summer_all <- full_join(SR_summer,SR_summer_zero)
+
+```
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+
+# Model Fitting
+
+
+SR.summer.mod.normal <- lmer(Summer_SR~Treatment+Year+(1|Block), data =
+SR_summer_all)
+summary(SR.summer.mod.normal)
+
+## Marginal R^2 (variance explained by ONLY fixed effects) = 
+## Conditional R^2 (variance explained by the entire model) = 
+
+## Inclusion of the random effect increased model fit 
+
+## interaction n.s.
+
+r.squaredGLMM(SR.summer.mod.normal)
+
+
+
+```
+
+```{r}
+
+Anova(SR.summer.mod.normal, type = 3)
+
+
+SR.summer.mod.normal.est <- lmer(Summer_SR~Treatment+(1|Block), data =
+SR_summer_all)
+
+
+est.lmer.SR.summer.treatment <- emmeans::emmeans(SR.summer.mod.normal.est, ~ Treatment, type = "response")
+
+pairs(est.lmer.SR.summer.treatment , adjust = "tukey")
+```
+
+
+
+```{r}
+set.seed(7)
+
+SR_summer_all_mean_sd <- SR_summer_all %>% 
+  group_by(Treatment, Year) %>% 
+  summarize(mean_SR_summer = mean(Summer_SR), sd_SR_summer = sd(Summer_SR))
+
+
+
+SR_summer_all_mean_sd$Treatment <- factor(SR_summer_all_mean_sd$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+
+SR_summer_all$Treatment <- factor(SR_summer_all$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+
+sr.summer.plot_treatment <-   ggplot()+
+  geom_jitter(data = SR_summer_all, 
+              aes(x = Year, y = Summer_SR, fill = Treatment, 
+                  shape = Treatment, group = Treatment), 
+              alpha = 1, size = 3.5, 
+              position = position_jitterdodge(dodge.width = 0.85))+
+  geom_errorbar(data = SR_summer_all_mean_sd,
+                aes(x = Year, y = mean_SR_summer,  group = Treatment, 
+                    ymin = mean_SR_summer - sd_SR_summer, 
+                    ymax = mean_SR_summer + sd_SR_summer), 
+                position = position_dodge(width = 0.85), width = .5,
+                size = 0.75)+
+  geom_point(data = SR_summer_all_mean_sd, size = 4.5, 
+             aes(x = Year, y = mean_SR_summer, 
+                 shape = Treatment,  group = Treatment), 
+             position = position_dodge2(width = 0.85),
+             fill = "black")+
+  labs(y = "Sown summer richness", x = "" )+
+  theme_classic() +
+  theme(text=element_text(size=18), 
+        legend.key.size=unit(1, "cm"),
+        legend.position="none",  
+        axis.text.x = element_text(size = 16), 
+        axis.text.y = element_text(size = 16))+
+  scale_fill_manual(name = "Treatment",
+                    breaks = c("LE", "LL", "NAT", "SIM"),  
+                    labels = c("Summer first", "Fall first", "Natural", "Simultaneous"), 
+                    values = c("#009E73", "#56B4E9",  "#F0E442", "#0072B2"))+
+  # scale_x_discrete(breaks = c("LE", "LL", "NAT", "SIM"),
+  #                  labels = c("Summer first", "Fall first", "Natural", "Simultaneous"))+
+  scale_shape_manual(name = "Treatment", 
+                     breaks = c("LE", "LL", "NAT", "SIM"), 
+                     labels = c("Summer first", "Fall first", "Natural", "Simultaneous"),
+                     values=c(21, 22,23, 25))+
+  scale_y_continuous(breaks = seq(0, 20, by = 5),
+                     limits = c(-0.75, 20))
+
+
+
+
+sr.summer.plot_treatment <- sr.summer.plot_treatment +
+  annotate("text", x = 1.2, y = 20, label = "Treatment: p < 0.001***",
+           fontface = 2, size = 4)
+
+```
+
+
+
+
+#### Fall-Dispersing 
+
+
+```{r}
+### Filter out everything that isn't a seeded fall-dispersing species
+
+SR_fall <- Sown_species_ID  %>% 
+  filter(Seeded == "Fall" & max_cover > 0 & Treatment != "NON") %>% 
+  summarize(Fall_SR = n_distinct(SPP6))
+
+
+SR_fall_zero <- Sown_species_ID %>% 
+  group_by(Block, Treatment, Year) %>% 
+  filter(Seeded == "Fall"  & Treatment != "NON") %>% 
+  summarise(max_cover = sum(max_cover))
+  
+SR_fall_zero <- SR_fall_zero  %>% 
+  filter(max_cover == 0) 
+
+
+SR_fall_zero <- SR_fall_zero[,c(1,2,3)]
+SR_fall_zero$Fall_SR <- rep(0, nrow(SR_fall_zero))
+
+
+SR_fall_all <- full_join(SR_fall,SR_fall_zero)
+
+
+```
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+
+# Model Fitting
+
+
+SR.fall.mod.normal <- lm(Fall_SR~Treatment+Year, data = SR_fall_all)
+summary(SR.fall.mod.normal)
+
+## Marginal R^2 (variance explained by ONLY fixed effects) = 
+## Conditional R^2 (variance explained by the entire model) = 
+
+## Inclusion of the random effect increased model fit 
+
+## interaction n.s.
+
+
+
+```
+
+```{r}
+
+Anova(SR.fall.mod.normal , type = 3)
+
+
+SR.fall.mod.normal.est <- lm(Fall_SR~Treatment, data = SR_fall_all)
+
+
+est.lmer.SR.fall.treatment <- emmeans::emmeans(SR.fall.mod.normal.est, ~ Treatment, type = "response")
+
+pairs(est.lmer.SR.fall.treatment , adjust = "tukey")
+```
+
+
+
+```{r}
+set.seed(5)
+
+SR_fall_all_mean_sd <- SR_fall_all %>% 
+  group_by(Treatment, Year) %>% 
+  summarize(mean_SR_fall = mean(Fall_SR), sd_SR_fall = sd(Fall_SR))
+
+
+
+SR_fall_all_mean_sd $Treatment <- factor(SR_fall_all_mean_sd $Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+
+SR_fall_all$Treatment <- factor(SR_fall_all$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+
+sr.fall.plot_treatment <-   ggplot()+
+    geom_jitter(data = SR_fall_all,
+              aes(x = Year, y = Fall_SR, fill = Treatment, shape = Treatment, group = Treatment), 
+              alpha = 0.8, size = 3.5,
+              position = position_jitterdodge(dodge.width = 0.85))+
+    geom_errorbar(data = SR_fall_all_mean_sd, 
+                  aes(x = Year, y = mean_SR_fall, ymin = mean_SR_fall - sd_SR_fall, 
+                      ymax = mean_SR_fall + sd_SR_fall, group = Treatment),
+                  position = position_dodge(width = 0.85), width = .5, size = 0.75) +
+    geom_point(data = SR_fall_all_mean_sd, size = 4.5, 
+               aes(x = Year, y = mean_SR_fall, shape = Treatment, group = Treatment), 
+               fill = "black", position = position_dodge(width = 0.85))+
+    labs(y = "Sown fall richness", x = "" ) +
+    theme_classic() +
+    theme(text=element_text(size=18), 
+          legend.key.size=unit(1, "cm"),
+          legend.position="none",  
+          axis.text.x = element_text(size = 16), 
+          axis.text.y = element_text(size = 16))+
+    scale_fill_manual(name = "Treatment", 
+                      breaks = c("LE", "LL", "NAT", "SIM"), 
+                      labels = c("Summer first", "Fall first", "Natural", "Simultaneous"), 
+                      values = c("#009E73", "#56B4E9",  "#F0E442", "#0072B2"))+
+    scale_shape_manual(name = "Treatment", 
+                       breaks = c("LE", "LL", "NAT", "SIM"),
+                       labels = c("Summer first", "Fall first", "Natural", "Simultaneous"),
+                       values=c(21, 22,23, 25))+
+  scale_y_continuous(breaks = seq(0, 20, by = 5),
+                     limits = c(-0.75, 20))
+
+
+
+sr.fall.plot_treatment  <- sr.fall.plot_treatment +
+  annotate("text", x = 1.2, y = 20, label = "Treatment: p < 0.001***",
+           fontface = 2, size = 4)
+
+```
+
+
+
+#### Unsown
+
+
+```{r}
+### Filter out everything that isn't a seeded fall-dispersing species
+
+SR_unsown_all <- Sown_species_ID  %>% 
+  filter(Seeded == "Unseeded" & max_cover > 0 & Treatment != "NON") %>% 
+  summarize(unsown_SR = n_distinct(SPP6))
+
+
+```
+
+
+```{r, echo = FALSE,  message = FALSE, warning = FALSE}
+
+# Model Fitting
+
+
+SR.unsown.mod.normal <- lmer(unsown_SR~Treatment+Year+(1|Block), data = SR_unsown_all)
+summary(SR.unsown.mod.normal)
+
+## Marginal R^2 (variance explained by ONLY fixed effects) = 
+## Conditional R^2 (variance explained by the entire model) = 
+
+## Inclusion of the random effect increased model fit 
+
+## interaction n.s.
+
+
+
+```
+
+```{r}
+
+Anova(SR.unsown.mod.normal , type = 3)
+
+
+```
+
+
+
+```{r}
+set.seed(5)
+
+SR_unsown_all_mean_sd <- SR_unsown_all %>% 
+  group_by(Treatment, Year) %>% 
+  summarize(mean_SR_unsown = mean(unsown_SR), sd_SR_unsown = sd(unsown_SR))
+
+
+
+SR_unsown_all_mean_sd $Treatment <- factor(SR_unsown_all_mean_sd $Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+
+SR_unsown_all$Treatment <- factor(SR_unsown_all$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+
+sr.unsown.plot_treatment <-   ggplot()+
+    geom_jitter(data = SR_unsown_all,
+              aes(x = Year, y = unsown_SR, fill = Treatment, shape = Treatment, group = Treatment), 
+              alpha = 0.8, size = 3.5,
+              position = position_jitterdodge(dodge.width = 0.85))+
+    geom_errorbar(data = SR_unsown_all_mean_sd, 
+                  aes(x = Year, y = mean_SR_unsown, ymin = mean_SR_unsown - sd_SR_unsown, 
+                      ymax = mean_SR_unsown + sd_SR_unsown, group = Treatment),
+                  position = position_dodge(width = 0.85), width = .5, size = 0.75) +
+    geom_point(data = SR_unsown_all_mean_sd, size = 4.5, 
+               aes(x = Year, y = mean_SR_unsown, shape = Treatment, group = Treatment), 
+               fill = "black", position = position_dodge(width = 0.85))+
+    labs(y = "Unsown richness", x = "" ) +
+    theme_classic() +
+    theme(text=element_text(size=18), 
+          legend.key.size=unit(1, "cm"),
+          legend.position="none",  
+          axis.text.x = element_text(size = 16), 
+          axis.text.y = element_text(size = 16))+
+    scale_fill_manual(name = "Treatment", 
+                      breaks = c("LE", "LL", "NAT", "SIM"), 
+                      labels = c("Summer first", "Fall first", "Natural", "Simultaneous"), 
+                      values = c("#009E73", "#56B4E9",  "#F0E442", "#0072B2"))+
+    scale_shape_manual(name = "Treatment", 
+                       breaks = c("LE", "LL", "NAT", "SIM"),
+                       labels = c("Summer first", "Fall first", "Natural", "Simultaneous"),
+                       values=c(21, 22,23, 25))+
+  scale_y_continuous(breaks = seq(0, 20, by = 5),
+                     limits = c(-0.75, 20))
+
+
+sr.unsown.plot_treatment
+
+```
+
+
+
+
 ### Shannon Diversity Index   {.tabset}
 
 #### SDI - Model assumptions
@@ -1167,6 +1548,41 @@ align='h', labels=c('A', 'B','C'), ncol = 3, font.label = list(size = 16), vjust
 diversity_panel
 ```
 
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 4.5}
+
+richness_panel <- ggarrange(sr.plot_treatment, sr.summer.plot_treatment, sr.fall.plot_treatment,
+align='h', labels=c('A', 'B','C'), ncol = 3,
+common.legend = T, legend = "bottom")
+
+richness_panel
+```
+
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 10.5}
+# set.seed(5)
+# richness_panel <- ggarrange(sr.plot_treatment, NULL, 
+#                             ggarrange(sr.summer.plot_treatment, sr.fall.plot_treatment, sr.unsown.plot_treatment, ncol = 3, labels = c("B)", "C)", "D"), hjust=.5, vjust = 1), labels = c("A)", ""), nrow = 2,  hjust=.5, vjust = 1)+
+#   theme(plot.margin = margin(1,1,1,1, "cm"))
+# 
+# richness_panel 
+
+
+# plot_grid(prop_immigrant_seeds_cover_rain.plot,  prop_immigrant_seedlings_rain_bank.plot, prop_immigrant_seedlings_cover_bank.plot, prop_new_species_cover_rain.plot , prop_new_species_rain_bank.plot,prop_new_species_cover_bank.plot, hjust=.5, vjust = 1, ncol = 3, labels = c("A)", "B)", "C)", "D)", "E)", "F)"), label_size = 18, align = 'v') +theme(plot.margin = margin(1,1,1,1, "cm"))
+
+# 
+# total_panel <- ggarrange(sr.plot_treatment, NULL, nrow = 1, ncol = 2, hjust=.5, vjust = 1, labels = c("A)", ""), widths = c(1, 0.25))
+#                             
+# richness_panel <- ggarrange(sr.summer.plot_treatment, sr.fall.plot_treatment, ncol = 2, labels = c("B)", "C)", "D"), hjust=.5, vjust = 1)
+#   
+# All_together_panel <- ggarrange(total_panel , richness_panel, nrow = 2)+
+#   theme(plot.margin = margin(1,1,1,1, "cm"))
+# 
+# All_together_panel
+# 
+
+
+```
+
+
 
 
 ## Question 2: Does timing of species arrival influence seeded cover? {.tabset}
@@ -1274,28 +1690,70 @@ plot(Binom_mod)
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
-#Re-order the levels
-Seeded_Mean$Treatment <- factor(Seeded_Mean$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
-
-total.cover.plot <- ggplot(data = Seeded_Mean, aes(x = Year,  y = Mean_seeded_prop, fill = Treatment))+
-  geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend = TRUE)+
-  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), 
-                aes(x = Year, ymax=Mean_seeded_prop+SD, ymin = Mean_seeded_prop), size = .75)  +
-  scale_fill_manual(name = "Treatment",
-                    breaks = c("NAT", "LE", "LL", "SIM"),
-                    labels = c("Natural","Summer first", "Fall first",  "Simultaneous"), 
-                    values=c("#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
-  labs(x = "Year", y = "Prop. seeded cover")+
-  theme_minimal()+
-  theme()+ 
-  scale_y_continuous(breaks=seq(0,.70,by=0.1), limits = c(0,.7))+
-  theme_classic() +
-  theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
-
-total.cover.plot 
+# #Re-order the levels
+# Seeded_Mean$Treatment <- factor(Seeded_Mean$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+# 
+# total.cover.plot <- ggplot(data = Seeded_Mean, aes(x = Year,  y = Mean_seeded_prop, fill = Treatment))+
+#   geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend = TRUE)+
+#   geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), 
+#                 aes(x = Year, ymax=Mean_seeded_prop+SD, ymin = Mean_seeded_prop), size = .75)  +
+#   scale_fill_manual(name = "Treatment",
+#                     breaks = c("NAT", "LE", "LL", "SIM"),
+#                     labels = c("Natural","Summer first", "Fall first",  "Simultaneous"), 
+#                     values=c("#F0E442",  "#009E73", "#56B4E9", "#0072B2"))+
+#   labs(x = "Year", y = "Prop. seeded cover")+
+#   theme_minimal()+
+#   theme()+ 
+#   scale_y_continuous(breaks=seq(0,.70,by=0.1), limits = c(0,.7))+
+#   theme_classic() +
+#   theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
+# 
+# total.cover.plot 
 
 ```
 
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#Re-order the levels
+Seeded_Mean$Treatment <- factor(Seeded_Mean$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+Total_Cover_Tot$Treatment <- factor(Total_Cover_Tot$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+
+total.cover.plot  <- ggplot()+
+  geom_jitter(data = Total_Cover_Tot,
+              aes(x = Year, y = Seeded_prop, fill = Treatment, shape = Treatment, group = Treatment), 
+              alpha = 0.8, size = 3.5,
+              position = position_jitterdodge(dodge.width = 0.85))+
+  geom_point(data = Seeded_Mean, size = 4.5,
+             aes(x = Year, y = Mean_seeded_prop, group = Treatment, shape = Treatment),
+             position = position_dodge2(width = 0.85), fill = "black", show_guide=FALSE)+
+  geom_errorbar(data = Seeded_Mean, 
+               aes(x = Year, ymax=Mean_seeded_prop+SD, ymin = Mean_seeded_prop-SD, group = Treatment), 
+                position =  position_dodge(width = 0.85), width = 0.5, size = .75, show_guide=FALSE)+ 
+  scale_fill_manual(name = "",
+                    breaks = c("LE", "LL", "NAT", "SIM"),
+                    labels = c("Summer first", "Fall first", "Natural", "Simultaneous"), 
+                    values=c( "#009E73", "#56B4E9", "#F0E442","#0072B2"))+
+  scale_shape_manual(name = "", 
+                       breaks = c("LE", "LL", "NAT", "SIM"),
+                       labels = c("Summer first", "Fall first", "Natural", "Simultaneous"),
+                       values=c(21, 22, 23, 25)) +
+  labs(x = "Year", y = "Prop. seeded cover")+
+  theme(axis.text=element_text(size=16), axis.title = element_text(size = 12))+
+  scale_y_continuous(breaks = seq(0, .8, by = .1),
+                     limits = c(-0.02, .8))+
+  theme_classic() +
+  theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
+
+
+total.cover.plot <- total.cover.plot +
+  annotate("text", x = 1.2, y = .8, label = "Treatment: p < 0.001***",
+           fontface =2, size = 4)+
+  annotate("text", x = 1.03, y = .75, label = "Year: p < 0.001***",
+           fontface =2, size = 4)+
+  annotate("text", x = .94, y = .7, label = "TxY: p < 0.05*",
+           fontface =2, size = 4)
+```
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 
@@ -1396,25 +1854,66 @@ plot(Binom_mod_early)
 #### ESC - Figures
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-#Re-order the levels
-Seeded_early_all_mean$Treatment <- factor(Seeded_early_all_mean$Treatment, levels=c( "NAT", "LE", "LL", "SIM"))
+# #Re-order the levels
+# Seeded_early_all_mean$Treatment <- factor(Seeded_early_all_mean$Treatment, levels=c( "NAT", "LE", "LL", "SIM"))
+# 
+# early.cover.plot <-ggplot(data = Seeded_early_all_mean, aes(x = Year,  y = Mean_cover, fill = Treatment))+
+#   geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend =  TRUE)+
+#   geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover), size = .75)+
+#   scale_fill_manual(name = "Treatment",
+#                     breaks = c("NAT", "LE", "LL", "SIM"),
+#                     labels = c("Natural","Summer first", "Fall first",  "Simultaneous"), 
+#                     values=c("#F0E442",  "#009E73", "#56B4E9","#0072B2"))+
+#   labs(x = "Year", y = "Prop. seeded summer cover")+
+#   theme_minimal()+
+#   theme(axis.text=element_text(size=16), axis.title = element_text(size = 12))+ 
+#   scale_y_continuous(breaks=seq(0, 0.7 ,by=.1), limits = c(0,0.7))+
+#   theme(legend.position = "none")+
+#   theme_classic()  +
+#   theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
+#   
+# early.cover.plot
+```
 
-early.cover.plot <-ggplot(data = Seeded_early_all_mean, aes(x = Year,  y = Mean_cover, fill = Treatment))+
-  geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend =  TRUE)+
-  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover), size = .75)+
-  scale_fill_manual(name = "Treatment",
-                    breaks = c("NAT", "LE", "LL", "SIM"),
-                    labels = c("Natural","Summer first", "Fall first",  "Simultaneous"), 
-                    values=c("#F0E442",  "#009E73", "#56B4E9","#0072B2"))+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
+#Re-order the levels
+Seeded_early_all_mean$Treatment <- factor(Seeded_early_all_mean$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+Total_Cover_Early$Treatment <- factor(Total_Cover_Early$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+
+early.cover.plot <- ggplot()+
+  geom_jitter(data = Total_Cover_Early,
+              aes(x = Year, y = Seeded_prop, fill = Treatment, shape = Treatment, group = Treatment), 
+              alpha = 0.8, size = 3.5,
+              position = position_jitterdodge(dodge.width = 0.85))+
+  geom_point(data = Seeded_early_all_mean, size = 4.5,
+             aes(x = Year, y = Mean_cover, group = Treatment, shape = Treatment),
+             position = position_dodge2(width = 0.85), fill = "black", show_guide=FALSE)+
+  geom_errorbar(data = Seeded_early_all_mean, 
+               aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover-SD, group = Treatment), 
+                position =  position_dodge(width = 0.85), width = 0.5, size = .75, show_guide=FALSE)+ 
+  scale_fill_manual(name = "",
+                    breaks = c("LE", "LL", "NAT", "SIM"),
+                    labels = c("Summer first", "Fall first", "Natural", "Simultaneous"), 
+                    values=c( "#009E73", "#56B4E9", "#F0E442","#0072B2"))+
+  scale_shape_manual(name = "", 
+                       breaks = c("LE", "LL", "NAT", "SIM"),
+                       labels = c("Summer first", "Fall first", "Natural", "Simultaneous"),
+                       values=c(21, 22, 23, 25)) +
   labs(x = "Year", y = "Prop. seeded summer cover")+
-  theme_minimal()+
-  theme(axis.text=element_text(size=16), axis.title = element_text(size = 12))+ 
-  scale_y_continuous(breaks=seq(0, 0.7 ,by=.1), limits = c(0,0.7))+
-  theme(legend.position = "none")+
-  theme_classic()  +
+  theme(axis.text=element_text(size=16), axis.title = element_text(size = 12))+
+  scale_y_continuous(breaks = seq(0, .7, by = .1),
+                     limits = c(-0.02, .7))+
+  theme_classic() +
   theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
-  
-early.cover.plot
+
+
+early.cover.plot <- early.cover.plot +
+  annotate("text", x = 1.2, y = .7, label = "Treatment: p < 0.001***",
+           fontface =2, size = 4)+
+  annotate("text", x = 1.03, y = .65, label = "Year: p < 0.001***",
+           fontface =2, size = 4)
 ```
 
 
@@ -1502,25 +2001,68 @@ plot(Binom_mod_late)
 
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+# #Re-order the levels
+# Seeded_late_all_mean$Treatment <- factor(Seeded_late_all_mean$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+# 
+# late.cover.plot <- ggplot(data = Seeded_late_all_mean, aes(x = Year,  y = Mean_cover, fill = Treatment))+
+#   geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend = TRUE)+
+#   geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover), size = .75)+ scale_fill_manual(name = "Treatment",
+#                     breaks = c("NAT", "LE", "LL", "SIM"),
+#                     labels = c("Natural","Summer first", "Fall first",  "Simultaneous"), 
+#                     values=c("#F0E442",  "#009E73", "#56B4E9",
+#                              "#0072B2"))+
+#   labs(x = "Year", y = "Prop. seeded fall cover")+
+#   theme(axis.text=element_text(size=16), axis.title = element_text(size = 12))+ 
+#   scale_y_continuous(breaks=seq(0, 0.7,by=.1), limits = c(0,0.7))+
+#   theme_classic() +
+#   theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
+# 
+# 
+# late.cover.plot
+```
+
+
+```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+
 #Re-order the levels
 Seeded_late_all_mean$Treatment <- factor(Seeded_late_all_mean$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
+Total_Cover_Late$Treatment <- factor(Total_Cover_Late$Treatment, levels=c("NAT", "LE", "LL", "SIM"))
 
-late.cover.plot <- ggplot(data = Seeded_late_all_mean, aes(x = Year,  y = Mean_cover, fill = Treatment))+
-  geom_bar(position = position_dodge(preserve = "single"), stat = "identity", color = "black", show.legend = TRUE)+
-  geom_errorbar(position =  position_dodge(width = 0.9, preserve = "single"), aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover), size = .75)+ scale_fill_manual(name = "Treatment",
-                    breaks = c("NAT", "LE", "LL", "SIM"),
-                    labels = c("Natural","Summer first", "Fall first",  "Simultaneous"), 
-                    values=c("#F0E442",  "#009E73", "#56B4E9",
-                             "#0072B2"))+
+late.cover.plot <- ggplot()+
+  geom_jitter(data = Total_Cover_Late,
+              aes(x = Year, y = Seeded_prop, fill = Treatment, shape = Treatment, group = Treatment), 
+              alpha = 0.8, size = 3.5,
+              position = position_jitterdodge(dodge.width = 0.85))+
+  geom_point(data = Seeded_late_all_mean, size = 4.5,
+             aes(x = Year, y = Mean_cover, group = Treatment, shape = Treatment),
+             position = position_dodge2(width = 0.85), fill = "black", show_guide=FALSE)+
+  geom_errorbar(data = Seeded_late_all_mean, 
+               aes(x = Year, ymax=Mean_cover+SD, ymin = Mean_cover-SD, group = Treatment), 
+                position =  position_dodge(width = 0.85), width = 0.5, size = .75, show_guide=FALSE)+ 
+  scale_fill_manual(name = "",
+                    breaks = c("LE", "LL", "NAT", "SIM"),
+                    labels = c("Summer first", "Fall first", "Natural", "Simultaneous"), 
+                    values=c( "#009E73", "#56B4E9", "#F0E442","#0072B2"))+
+  scale_shape_manual(name = "", 
+                       breaks = c("LE", "LL", "NAT", "SIM"),
+                       labels = c("Summer first", "Fall first", "Natural", "Simultaneous"),
+                       values=c(21, 22, 23, 25)) +
   labs(x = "Year", y = "Prop. seeded fall cover")+
-  theme(axis.text=element_text(size=16), axis.title = element_text(size = 12))+ 
-  scale_y_continuous(breaks=seq(0, 0.7,by=.1), limits = c(0,0.7))+
+  theme(axis.text=element_text(size=16), axis.title = element_text(size = 12))+
+  scale_y_continuous(breaks = seq(0, .7, by = .1),
+                     limits = c(-0.01, .7))+
   theme_classic() +
   theme(text=element_text(size=16), axis.text.x = element_text(size = 14), axis.text.y= element_text(size = 14))
 
 
-late.cover.plot
+late.cover.plot <- late.cover.plot+
+  annotate("text", x = 1.2, y = .7, label = "Treatment: p < 0.001***",
+           fontface =2, size = 4)+
+  annotate("text", x = .98, y = .65, label = "Year: p < 0.01**",
+           fontface =2, size = 4)
 ```
+
+
 
 
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
@@ -1695,7 +2237,7 @@ legend.key = element_blank())
 
 #Make a wide formatted dataset
 inner_wide_2022 <- inner_cover_max_reduced_lumped  %>%
-  filter(Year %in% 2022) %>% 
+  filter(Year %in% 2022 & Treatment != "NON") %>% 
   group_by(Block, Treatment, SPP6) %>% 
   summarize(max_cover = sum(max_cover)) %>% 
   spread(key="SPP6", value="max_cover") 
@@ -1714,14 +2256,14 @@ inner_wide_labels_2022 <- inner_wide_2022[,c(1,2)]
 ## Bare ground dataset
 inner_bare_cover_2022 <- inner_bare_cover %>% 
   filter(Year == "2022") %>% 
-  filter(Treatment != "2022") %>% 
+  filter(Treatment != "NON" & Treatment != "EMP") %>% 
    rename("Bare_cover" = "max_cover") %>% 
   select(-SPP6)
 
 ## Light dataset
 
 light_2022 <- light_fall_2022 %>% 
-  filter(Treatment != "EMP") %>% 
+  filter(Treatment != "EMP" & Treatment!= "NON") %>% 
   group_by(Block, Treatment, Location) %>% 
   summarize(Mean_Light = mean(Light))  %>% 
   spread(key = Location , value = Mean_Light)
@@ -1856,12 +2398,12 @@ dbRDA.2022.plot <- ggplot() +
     geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +  
     xlab(axis.long1[1, "label"]) +
     ylab(axis.long1[2, "label"]) +  
-    scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
-                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
-                         values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
-    scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
-                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
-                         values = c(21, 22, 23, 24, 25))+
+    scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "SIM"),
+                         labels = c("Summer first", "Fall first", "Natural", "Simultaneous"),
+                         values = c("#009E73", "#56B4E9",  "#F0E442", "#0072B2"))+
+    scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "SIM"),
+                         labels = c("Summer first", "Fall first", "Natural", "Simultaneous"),
+                         values = c(21, 22, 23, 25))+
   geom_polygon(data=Treatment.ellipses.22.1, 
                    aes(x=axis1, y=axis2, fill=Treatment, alpha = 0.1), 
               size=0.2, show.legend=FALSE) +
@@ -1871,9 +2413,9 @@ dbRDA.2022.plot <- ggplot() +
   geom_segment(data=species.long.1, 
                  aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
                  colour="grey0", size=.8, alpha = 0.4) +
-  scale_color_manual(name = "Species", breaks = c("Fall", "Summer", "Unseeded", "Env."),
-                         labels = c("Seeded fall dispersing", "Seeded summer dispersing", "Unseeded", "Midstory light"),
-                         values = c("darkblue", "#003c00",  "#cc461b", "black"))+
+  scale_color_manual(name = "Species", breaks = c("Fall", "Summer", "Unseeded"),
+                         labels = c("Seeded fall dispersing", "Seeded summer dispersing", "Unseeded"),
+                         values = c("darkblue", "#003c00",  "#444444"))+
     geom_label_repel(data=species.long.1, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
                    alpha = 0.5, 
                    label.padding=.1, 
@@ -1888,13 +2430,162 @@ dbRDA.2022.plot <- ggplot() +
                    seed = 1234) +
     BioR.theme  +
     coord_fixed(ratio=1)+
-  annotate("text", x = -1.5, y = 2, label = "Y1: 2022", size = 7, fontface =2)
+  annotate("text", x = -1.10, y = 2, label = "Y1: 2022", size = 7, fontface =2)
 
 dbRDA.2022.plot
+
+```
+
+
+### 2022 NMDS
+
+```{r, results = 'hide', echo = FALSE, message = FALSE, warning = FALSE, fig.show='hide'}
+
+# Check the number of dimensions needed for the NMDS  (write the result of this test)
+
+library(goeveg)
+## Bray-Curtis dissimilarity
+dimcheckMDS(inner.hel.2022, distance = "bray", k=6, trymax= 50, autotransform = FALSE)
+
+###
+## *** Best solution with three dimensions
+```
+
+```{r, echo = FALSE, results = 'hide', echo = FALSE, message = FALSE, warning = FALSE}
+set.seed(5)
+Bray_NMDS_2022 <- metaMDS(inner.hel.2022, distance = "bray", k=3, try=1000, trymax = 1000, autotransform =  FALSE)
+```
+
+```{r, results = 'hide', message = FALSE, echo = FALSE, warning = FALSE}
+set.seed(5)
+### Looks at which species were the most influential in driving the observed patterns
+
+inner.spp.fit <- envfit(Bray_NMDS_2022, inner.hel.2022, permutations = 5000, k = 3)
+
+#head(inner.spp.fit)
 
 
 ```
 
+```{r, results = 'hide', message = FALSE, echo = FALSE, warning = FALSE, fig.show='hide'}
+
+# Make a grouping variable so I can match site names to the NMDS output
+site = c(rep(c("LE", "LL", "NAT", "SIM"), 6))
+
+# Put the NMDS scores into it's own dataframe 
+scrs <- as.data.frame(scores(Bray_NMDS_2022, display = "sites"))
+
+# Match the NMDS scores to the right site labels
+scrs <- cbind(scrs, site)
+
+# Extracts the required scaling factor for the vector arrows
+arrow_factor <- ordiArrowMul(inner.spp.fit)
+
+# Take the envfit model and convert into a a dataframe (scaled)
+spp.scrs <- as.data.frame(scores(inner.spp.fit, display = "vectors"))*arrow_factor
+
+# Add the p values, R squared values to the envit model species score dataframe
+spp.scrs <- cbind(spp.scrs, Species = rownames(spp.scrs), Pvalues = inner.spp.fit$vectors$pvals, R_squared = inner.spp.fit$vectors$r)
+
+
+# Subset out species that had a p value <= 0.001 (since I think env fit truncates to 0.001)
+spp.scrs.01 <- subset(spp.scrs, Pvalues < 0.01)
+
+spp.scrs.01 <- tibble::rownames_to_column(spp.scrs.01, "SPP6")
+
+species.long.1 <- left_join(spp.scrs.01, species_list_PE, by = "SPP6")
+
+```
+
+```{r, results = 'hide', message = FALSE, echo = FALSE, warning = FALSE, fig.show='hide'}
+
+# Only including this plot because I need to call the plot in order to obtain the ordiellipse object
+
+plot(Bray_NMDS_2022$points, xlim = c(-2, 2), ylim = c(-2, 2), col = alpha(0.5), xlab = "NMDS1", ylab = "NMDS2", cex.lab = 1.25, cex.axis = 1.25, bty="n")
+
+
+# Store the ordiellipse data into a list
+site.ellipses <- ordiellipse(Bray_NMDS_2022, groups = site, display = "sites", kind = "se", conf = 0.95)
+
+
+# Convert the ordiellipse data into a dataframe that I can plot in ggplot
+site.ellipses.long2 <- ordiellipse.long(site.ellipses, grouping.name="site")
+```
+
+
+
+```{r, results = 'hide', message = FALSE, echo = FALSE, warning = FALSE, fig.width = 8, fig.height = 8}
+
+library(ggnewscale)
+
+# Plot the species scores + the NMDS results
+
+NMDS_plot_2022 <- ggplot(scrs) +
+  geom_point(mapping = aes(x = NMDS1, y = NMDS2, 
+                      fill = site, shape = site),
+             size=2.5, alpha = 0.8) + 
+  new_scale_color()+
+  scale_shape_manual(name = "Treatment", 
+                     values=c(21, 22,23, 25),
+                     breaks=c("LE", "LL", "NAT", "SIM"),
+                     labels = c("Summer first", "Fall first",
+                                "Natural", "Simultaneous")) +
+  scale_fill_manual(name = "Treatment",
+                    values=c("#009E73", "#56B4E9",  "#F0E442","#0072B2"),
+                    breaks=c("LE", "LL", "NAT", "SIM"), 
+                    labels = c("Summer first", "Fall first",
+                                "Natural", "Simultaneous")) +
+  coord_fixed() +
+  geom_segment(data = species.long.1, 
+              aes(x = 0, xend = NMDS1 * arrow_factor, y = 0,
+                  yend = NMDS2* arrow_factor),
+                  arrow = arrow(length = unit(0.2, "cm")), 
+                  color = "#888888", alpha = 0.7) +
+  geom_text_repel(data = species.long.1,
+                  aes(x = NMDS1 * arrow_factor, 
+                      y = NMDS2 * arrow_factor,
+                      label = Scientific_Name, color = Seeded),  
+                      size = 3, max.overlaps = getOption("ggrepel.max.overlaps", default = 50) ) +
+  scale_color_manual(name = "Species",
+                     values=c("darkblue", "#003c00",  "#444444"),
+                     breaks=c("Fall", "Summer", "Unseeded"), 
+                     labels = c("Fall", "Summer", "Unseeded"))+
+  new_scale_color()+
+  geom_polygon(data = site.ellipses.long2, 
+               aes(x = axis1, y=axis2, color = site, 
+                   fill =   after_scale(alpha(color, 0.2))), 
+               size = 0.2, show.legend = FALSE) +
+   scale_color_manual(name = "Treatment",
+                    values=c("#009E73", "#56B4E9",  "#F0E442","#0072B2"),
+                    breaks=c("LE", "LL", "NAT", "SIM"), 
+                    labels = c("Summer first", "Fall first",
+                                "Natural", "Simultaneous"))+
+  annotate("text", x = -.67, y = 1,
+           label = "bold(Stress) == 0.12", parse = TRUE)+
+  annotate("text", x = -.8, y = .9, 
+           label = "bold(K) == 3", parse = TRUE) +
+  theme_classic() +
+  theme(text=element_text(size=18), 
+        legend.key.size=unit(0.5, "cm"),
+        legend.position = "right")+
+  scale_y_continuous(breaks = seq(-0.5, 1, by = .5),
+                     limits = c(-0.8, 1))+
+  scale_x_continuous(breaks = seq(-0.8, .8, by = .4),
+                     limits = c(-1, .8))
+
+
+NMDS_plot_2022
+```
+
+
+```{r}
+adonis2(inner.hel.2022 ~ Treatment, data = env.data.2022,  dist="bray")
+
+### Pair-wise comparisons
+library(pairwiseAdonis)
+pairwise.adonis2(inner.hel.2022 ~ Treatment, data = env.data.2022, p.adjust = "bonferroni")
+
+```
 
 
 ### Year: 2023
@@ -1903,7 +2594,7 @@ dbRDA.2022.plot
 
 #Make a wide formatted dataset
 inner_wide_2023 <- inner_cover_max_reduced_lumped  %>%
-  filter(Year %in% 2023) %>% 
+  filter(Year %in% 2023 & Treatment != "NON") %>% 
   spread(key="SPP6", value="max_cover") 
 
 #Replace NA values with 0
@@ -1920,7 +2611,7 @@ inner_wide_labels_2023 <- inner_wide_2023[,c(1,2,3)]
 
 ## Bare ground dataset
 inner_bare_cover_2023 <- inner_bare_cover %>% 
-  filter(Year == "2023") %>% 
+  filter(Year == "2023" & Treatment != "NON") %>% 
    rename("Bare_cover" = "max_cover") %>% 
   select(-SPP6)
 
@@ -1928,6 +2619,7 @@ inner_bare_cover_2023 <- inner_bare_cover %>%
 
 light_2023 <- light_fall_2023 %>% 
   group_by(Block, Treatment, Location) %>% 
+  filter(Treatment != "NON") %>% 
   summarize(Mean_Light = mean(Light)) %>% 
   spread(key = Location , value = Mean_Light)
 
@@ -1936,6 +2628,17 @@ light_2023 <- light_fall_2023 %>%
 env.data.2023.bare <- full_join(inner_wide_labels_2023, inner_bare_cover_2023) 
 
 env.data.2023 <- full_join(env.data.2023.bare, light_2023)
+
+
+
+env.data.2023 <- env.data.2023 %>% 
+ unite(UniqueBlock, c(Treatment,Block), sep = "_", remove = FALSE)
+
+
+row.names(inner_wide_mat_2023 ) <- env.data.2023$UniqueBlock
+inner_wide_mat_2023 <- data.matrix(inner_wide_mat_2023 )
+
+
 
 # Standardize by max 
 
@@ -1962,7 +2665,7 @@ anova(dbRDA, step = 1000, by = "terms", permu = 999)
 
 ### Pair-wise comparisons
 
-BiodiversityR::multiconstrained(method = "capscale", inner.hel.2023 ~ Treatment+Middle, data = env.data.2023,  dist="bray", add = TRUE)
+BiodiversityR::multiconstrained(method = "capscale", inner.hel.2023 ~ Treatment, data = env.data.2023,  dist="bray", add = TRUE)
 ```
 
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
@@ -2051,8 +2754,8 @@ dbRDA.2023.plot <- ggplot() +
                size=4.5) +
   geom_segment(data=species.long3, 
                  aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
-                 colour="grey0", size=0.8, alpha = 0.4) +
-    geom_label_repel(data=species.long3, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
+                 color="grey0", size=0.8, alpha = 0.4) +
+    geom_label_repel(data=species.long3, aes(x=axis1*4, y=axis2*4, color=Seeded, label=SPP6), size = 4.5,
                    alpha = 0.5, 
                    label.padding=.1, 
                    na.rm=TRUE,
@@ -2064,15 +2767,164 @@ dbRDA.2023.plot <- ggplot() +
                    fill = NA,
                    na.rm=TRUE,
                    seed = 1234) +
-  scale_color_manual(name = "Vectors", breaks = c("Fall", "Summer", "Unseeded", "Env."),
-                         labels = c("Seeded fall dispersing species", "Seeded summer dispersing species", "Unseeded species", "Midstory light"),
-                        values = c("darkblue", "#003c00",  "#cc461b", "black"))+
+  scale_color_manual(name = "Vectors", breaks = c("Fall", "Summer", "Unseeded"),
+                         labels = c("Sown Fall", "Sown Summer", "Unsown"),
+                        values = c("darkblue", "#006400", "#444444"))+
     BioR.theme  +
     coord_fixed(ratio=1)+
-  annotate("text", x = -2.5, y = 2.5, label = "Y2: 2023", size = 7, fontface =2)
+  annotate("text", x = -1.25, y = 2.5, label = "Y2: 2023", size = 7, fontface =2)
 
 
 dbRDA.2023.plot
+```
+
+
+### 2023 NMDS 
+```{r, results = 'hide', echo = FALSE, message = FALSE, warning = FALSE, fig.show='hide'}
+
+# Check the number of dimensions needed for the NMDS  (write the result of this test)
+
+library(goeveg)
+## Bray-Curtis dissimilarity
+dimcheckMDS(inner.hel.2023, distance = "bray", k=6, trymax= 50, autotransform = FALSE)
+
+###
+## *** Best solution with three dimensions
+```
+
+```{r, echo = FALSE, results = 'hide', echo = FALSE, message = FALSE, warning = FALSE}
+set.seed(5)
+Bray_NMDS_2023 <- metaMDS(inner.hel.2023, distance = "bray", k=3, try=1000, trymax = 1000, autotransform =  FALSE)
+```
+
+```{r, results = 'hide', message = FALSE, echo = FALSE, warning = FALSE}
+set.seed(5)
+### Looks at which species were the most influential in driving the observed patterns
+
+inner.spp.fit <- envfit(Bray_NMDS_2023, inner.hel.2023, permutations = 5000, k = 3)
+
+#head(inner.spp.fit)
+```
+
+```{r, results = 'hide', message = FALSE, echo = FALSE, warning = FALSE, fig.show='hide'}
+
+# Make a grouping variable so I can match site names to the NMDS output
+site = c(rep(c("LE", "LL", "NAT", "SIM"), 6))
+
+# Put the NMDS scores into it's own dataframe 
+scrs <- as.data.frame(scores(Bray_NMDS_2023, display = "sites"))
+
+# Match the NMDS scores to the right site labels
+scrs <- cbind(scrs, site)
+
+# Extracts the required scaling factor for the vector arrows
+arrow_factor <- ordiArrowMul(inner.spp.fit)
+
+# Take the envfit model and convert into a a dataframe (scaled)
+spp.scrs <- as.data.frame(scores(inner.spp.fit, display = "vectors"))*arrow_factor
+
+# Add the p values, R squared values to the envit model species score dataframe
+spp.scrs <- cbind(spp.scrs, Species = rownames(spp.scrs), Pvalues = inner.spp.fit$vectors$pvals, R_squared = inner.spp.fit$vectors$r)
+
+
+# Subset out species that had a p value <= 0.001 (since I think env fit truncates to 0.001)
+spp.scrs.01 <- subset(spp.scrs, Pvalues < 0.01)
+
+spp.scrs.01 <- tibble::rownames_to_column(spp.scrs.01, "SPP6")
+
+species.long.1 <- left_join(spp.scrs.01, species_list_PE, by = "SPP6")
+
+
+```
+
+```{r, results = 'hide', message = FALSE, echo = FALSE, warning = FALSE, fig.show='hide'}
+
+# Only including this plot because I need to call the plot in order to obtain the ordiellipse object
+
+plot(Bray_NMDS_2023$points, xlim = c(-2, 2), ylim = c(-2, 2), col = alpha(0.5), xlab = "NMDS1", ylab = "NMDS2", cex.lab = 1.25, cex.axis = 1.25, bty="n")
+
+
+# Store the ordiellipse data into a list
+site.ellipses <- ordiellipse(Bray_NMDS_2023, groups = site, display = "sites", kind = "se", conf = 0.95)
+
+
+# Convert the ordiellipse data into a dataframe that I can plot in ggplot
+site.ellipses.long2 <- ordiellipse.long(site.ellipses, grouping.name="site")
+```
+
+
+
+```{r, results = 'hide', message = FALSE, echo = FALSE, warning = FALSE, fig.width = 8, fig.height = 8}
+
+# Plot the species scores + the NMDS results
+
+NMDS_plot_2023 <- ggplot(scrs) +
+  geom_point(mapping = aes(x = NMDS1, y = NMDS2, 
+                      fill = site, shape = site),
+             size=2.5, alpha = 0.8) + 
+  new_scale_color()+
+  scale_shape_manual(name = "", 
+                     values=c(21, 22,23, 25),
+                     breaks=c("LE", "LL", "NAT", "SIM"),
+                     labels = c("Summer first", "Fall first",
+                                "Natural", "Simultaneous")) +
+  scale_fill_manual(name = "",
+                    values=c("#009E73", "#56B4E9",  "#F0E442","#0072B2"),
+                    breaks=c("LE", "LL", "NAT", "SIM"), 
+                    labels = c("Summer first", "Fall first",
+                                "Natural", "Simultaneous")) +
+  coord_fixed() +
+  geom_segment(data = species.long.1, 
+              aes(x = 0, xend = NMDS1 * arrow_factor, y = 0,
+                  yend = NMDS2* arrow_factor),
+                  arrow = arrow(length = unit(0.2, "cm")), 
+                  color = "#888888", alpha = 0.7) +
+  geom_text_repel(data = species.long.1,
+                  aes(x = NMDS1 * arrow_factor, 
+                      y = NMDS2 * arrow_factor,
+                      label = Scientific_Name, color = Seeded),  
+                      size = 3, max.overlaps = getOption("ggrepel.max.overlaps", default = 50) ) +
+  scale_color_manual(name = "",
+                     values=c("darkblue", "#003c00",  "#444444"),
+                     breaks=c("Fall", "Summer", "Unseeded"), 
+                     labels = c("Fall", "Summer", "Unseeded"))+
+  new_scale_color()+
+  geom_polygon(data = site.ellipses.long2, 
+               aes(x = axis1, y=axis2, color = site, 
+                   fill =   after_scale(alpha(color, 0.2))), 
+               size = 0.2, show.legend = FALSE) +
+   scale_color_manual(name = "",
+                    values=c("#009E73", "#56B4E9",  "#F0E442","#0072B2"),
+                    breaks=c("LE", "LL", "NAT", "SIM"), 
+                    labels = c("Summer first", "Fall first",
+                                "Natural", "Simultaneous"))+
+  annotate("text", x = -.67, y = 1,
+           label = "bold(Stress) == 0.12", parse = TRUE)+
+  annotate("text", x = -.8, y = .9, 
+           label = "bold(K) == 3", parse = TRUE) +
+  theme_classic() +
+  theme(text=element_text(size=18), 
+        legend.key.size=unit(0.5, "cm"),
+        legend.position = "right")+
+  scale_y_continuous(breaks = seq(-0.5, 1, by = .5),
+                     limits = c(-0.8, 1))+
+  scale_x_continuous(breaks = seq(-0.8, .8, by = .4),
+                     limits = c(-1, .8))
+
+
+
+
+NMDS_plot_2023
+```
+
+
+```{r}
+adonis2(inner.hel.2023 ~ Treatment, data = env.data.2023,  dist="bray")
+
+### Pair-wise comparisons
+library(pairwiseAdonis)
+pairwise.adonis2(inner.hel.2023 ~ Treatment, data = env.data.2023, p.adjust = "bonferroni")
+
 ```
 
 
@@ -2080,13 +2932,37 @@ dbRDA.2023.plot
 
 ```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 12, fig.height = 12}
 
-RDA_panel <- ggarrange(dbRDA.2022.plot, dbRDA.2023.plot,
-align='h', labels=c('A', 'B'), ncol = 1,
-common.legend = T, legend = "right", font.label = list(size = 20))
 
-RDA_panel
+legend_1 <- get_legend(dbRDA.2023.plot)
+
+rm_legend <- function(p){p + theme(legend.position = "none")}
+
+RDA_panel <- ggarrange(rm_legend(dbRDA.2022.plot), rm_legend(dbRDA.2023.plot),
+align='h', labels=c('A', 'B'), ncol = 1, font.label = list(size = 20))
+
+RDA_panel_legend <- ggarrange(RDA_panel, legend_1, ncol = 2, widths = c(1, 0.15)) +theme(plot.margin = margin(1,1,1,1, "cm"))
+
+RDA_panel_legend 
+
+
+
 ```
 
+```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 10}
+
+legend_1 <- get_legend(NMDS_plot_2022)
+
+NMDS_plot_2022 <- NMDS_plot_2022 + theme(plot.margin = margin(0,0,0,8, "cm"))
+
+NMDS_plot_2023 <- NMDS_plot_2023 + theme(plot.margin = margin(0,0,0,8, "cm"))
+
+NMDS_Panel <- ggarrange(rm_legend(NMDS_plot_2022), rm_legend(NMDS_plot_2023), labels = c("A)", "B)"), hjust = -15, ncol = 1)
+
+
+NMDS_Panel2 <- ggarrange(NMDS_Panel, legend_1 , heights = c(2, 0.5), widths = c(2, 0.5), ncol = 2)
+
+NMDS_Panel2 
+```
 
 ##  Question 3b: Does timing of species arrival influence species composition? - Jaccard {.tabset}
 
@@ -2099,61 +2975,61 @@ RDA_panel
 
 
 ```{r, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-
-#Make a wide formatted dataset
-inner_wide_2022 <- inner_cover_max_reduced_lumped  %>%
-  filter(Year %in% 2022) %>% 
-  group_by(Block, Treatment, SPP6) %>% 
-  summarize(max_cover = sum(max_cover)) %>% 
-  spread(key="SPP6", value="max_cover") 
-
-#Replace NA values with 0
-
-inner_wide_2022[is.na(inner_wide_2022)] <- 0 
-
-#Turn our dataset into a matrix 
-inner_wide_mat_2022 <- inner_wide_2022[,-c(1,2)]
-
-
-# labels
-inner_wide_labels_2022 <- inner_wide_2022[,c(1,2)]
-
-## Bare ground dataset
-inner_bare_cover_2022 <- inner_bare_cover %>% 
-  filter(Year == "2022") %>% 
-  filter(Treatment != "2022") %>% 
-   rename("Bare_cover" = "max_cover") %>% 
-  select(-SPP6)
-
-## Light dataset
-
-light_2022 <- light_fall_2022 %>% 
-  filter(Treatment != "EMP") %>% 
-  group_by(Block, Treatment, Location) %>% 
-  summarize(Mean_Light = mean(Light))  %>% 
-  spread(key = Location , value = Mean_Light)
-
-## join
-
-env.data.2022.bare <- full_join(inner_wide_labels_2022, inner_bare_cover_2022) 
-
-env.data.2022 <- full_join(env.data.2022.bare, light_2022) 
-
-env.data.2022 <- env.data.2022 %>% 
- unite(UniqueBlock, c(Treatment,Block), sep = "_", remove = FALSE)
-
-
-
-
-row.names(inner_wide_mat_2022 ) <- env.data.2022$UniqueBlock
-inner_wide_mat_2022 <- data.matrix(inner_wide_mat_2022 )
-
-
-
-# Standardize by pa 
-
-inner.pa.2022 <- decostand(inner_wide_mat_2022, "pa")
-
+# 
+# #Make a wide formatted dataset
+# inner_wide_2022 <- inner_cover_max_reduced_lumped  %>%
+#   filter(Year %in% 2022) %>% 
+#   group_by(Block, Treatment, SPP6) %>% 
+#   summarize(max_cover = sum(max_cover)) %>% 
+#   spread(key="SPP6", value="max_cover") 
+# 
+# #Replace NA values with 0
+# 
+# inner_wide_2022[is.na(inner_wide_2022)] <- 0 
+# 
+# #Turn our dataset into a matrix 
+# inner_wide_mat_2022 <- inner_wide_2022[,-c(1,2)]
+# 
+# 
+# # labels
+# inner_wide_labels_2022 <- inner_wide_2022[,c(1,2)]
+# 
+# ## Bare ground dataset
+# inner_bare_cover_2022 <- inner_bare_cover %>% 
+#   filter(Year == "2022") %>% 
+#   filter(Treatment != "2022") %>% 
+#    rename("Bare_cover" = "max_cover") %>% 
+#   select(-SPP6)
+# 
+# ## Light dataset
+# 
+# light_2022 <- light_fall_2022 %>% 
+#   filter(Treatment != "EMP") %>% 
+#   group_by(Block, Treatment, Location) %>% 
+#   summarize(Mean_Light = mean(Light))  %>% 
+#   spread(key = Location , value = Mean_Light)
+# 
+# ## join
+# 
+# env.data.2022.bare <- full_join(inner_wide_labels_2022, inner_bare_cover_2022) 
+# 
+# env.data.2022 <- full_join(env.data.2022.bare, light_2022) 
+# 
+# env.data.2022 <- env.data.2022 %>% 
+#  unite(UniqueBlock, c(Treatment,Block), sep = "_", remove = FALSE)
+# 
+# 
+# 
+# 
+# row.names(inner_wide_mat_2022 ) <- env.data.2022$UniqueBlock
+# inner_wide_mat_2022 <- data.matrix(inner_wide_mat_2022 )
+# 
+# 
+# 
+# # Standardize by pa 
+# 
+# inner.pa.2022 <- decostand(inner_wide_mat_2022, "pa")
+# 
 
 ```
 
@@ -2169,47 +3045,47 @@ inner.pa.2022 <- decostand(inner_wide_mat_2022, "pa")
 ## Light and bare ground were not important predictors
 
 
-
-dbRDA.22.jac <- capscale(inner.pa.2022 ~ Treatment, data =env.data.2022 ,  dist="jaccard", add = TRUE)
-
-## dbRDA results
-dbRDA.22.jac
-
-env.data.2022$Block <- as.factor(env.data.2022$Block)
-
-## PERMANOVA results
-
-anova(dbRDA.22.jac, step = 1000, by = "terms", permu = 999)
-
-
-### Pair-wise comparisons
-
-BiodiversityR::multiconstrained(method = "capscale", inner.pa.2022  ~ Treatment, data = env.data.2022, by = "term", dist="jaccard", add = TRUE)
+# 
+# dbRDA.22.jac <- capscale(inner.pa.2022 ~ Treatment, data =env.data.2022 ,  dist="jaccard", add = TRUE)
+# 
+# ## dbRDA results
+# dbRDA.22.jac
+# 
+# env.data.2022$Block <- as.factor(env.data.2022$Block)
+# 
+# ## PERMANOVA results
+# 
+# anova(dbRDA.22.jac, step = 1000, by = "terms", permu = 999)
+# 
+# 
+# ### Pair-wise comparisons
+# 
+# BiodiversityR::multiconstrained(method = "capscale", inner.pa.2022  ~ Treatment, data = env.data.2022, by = "term", dist="jaccard", add = TRUE)
 
 ```
 
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 ### Get the basic ordination plot 
 
-plot1 <- ordiplot(dbRDA.22.jac, choices = c(1,2))
+# plot1 <- ordiplot(dbRDA.22.jac, choices = c(1,2))
 ```
 
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 ### extract the site information
 
-sites.long1 <- sites.long(plot1, env.data = env.data.2022)
-
-head(sites.long1)
-
-### extract the species information
-
-species.long1 <- species.long(plot1)
-species.long1
-
-### extract the first two axis info
-
-axis.long1 <- axis.long(dbRDA.22.jac, choices = c(1,2))
-axis.long1 
+# sites.long1 <- sites.long(plot1, env.data = env.data.2022)
+# 
+# head(sites.long1)
+# 
+# ### extract the species information
+# 
+# species.long1 <- species.long(plot1)
+# species.long1
+# 
+# ### extract the first two axis info
+# 
+# axis.long1 <- axis.long(dbRDA.22.jac, choices = c(1,2))
+# axis.long1 
 ```
 
 
@@ -2218,22 +3094,22 @@ axis.long1
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 # Do an envfit to find influential speicies (p < 0.05)
 
-
-spec.envfit1 <- envfit(plot1, env=inner.pa.2022)
-spec.data.envfit1 <- data.frame(r=spec.envfit1$vectors$r, p=spec.envfit1$vectors$pvals)
-species.long1 <- species.long(plot1, spec.data=spec.data.envfit1)
-species.long1
-
-
-species.long.1 <- species.long1[species.long1$p < 0.01, ]
-species.long.1
-
-# Join influential species dataframe to species list information so we can later color species labels by seeded status
-
-species.long.1 <- species.long.1 %>% 
-  rename(SPP6 = "labels")
-
-species.long.1 <- left_join(species.long.1, species_list_PE, by = "SPP6")
+# 
+# spec.envfit1 <- envfit(plot1, env=inner.pa.2022)
+# spec.data.envfit1 <- data.frame(r=spec.envfit1$vectors$r, p=spec.envfit1$vectors$pvals)
+# species.long1 <- species.long(plot1, spec.data=spec.data.envfit1)
+# species.long1
+# 
+# 
+# species.long.1 <- species.long1[species.long1$p < 0.01, ]
+# species.long.1
+# 
+# # Join influential species dataframe to species list information so we can later color species labels by seeded status
+# 
+# species.long.1 <- species.long.1 %>% 
+#   rename(SPP6 = "labels")
+# 
+# species.long.1 <- left_join(species.long.1, species_list_PE, by = "SPP6")
 ```
 
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
@@ -2247,57 +3123,57 @@ species.long.1 <- left_join(species.long.1, species_list_PE, by = "SPP6")
 
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 # Get the ellipse information
-
-ordiplot(dbRDA.22.jac, choices = c(1,2))
-Treatment.ellipses.22 <- ordiellipse(plot1, groups=env.data.2022$Treatment, display="sites", kind="sd")
-Treatment.ellipses.22.1 <- ordiellipse.long(Treatment.ellipses.22 , grouping.name="Treatment")
+# 
+# ordiplot(dbRDA.22.jac, choices = c(1,2))
+# Treatment.ellipses.22 <- ordiellipse(plot1, groups=env.data.2022$Treatment, display="sites", kind="sd")
+# Treatment.ellipses.22.1 <- ordiellipse.long(Treatment.ellipses.22 , grouping.name="Treatment")
 ```
 
 ```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 10}
 
-# Plot it!
-
-
-dbRDA.2022.plot.jac <- ggplot() + 
-    geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
-    geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +  
-    xlab(axis.long1[1, "label"]) +
-    ylab(axis.long1[2, "label"]) +  
-    scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
-                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
-                         values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
-    scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
-                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
-                         values = c(21, 22, 23, 24, 25))+
-  geom_polygon(data=Treatment.ellipses.22.1, 
-                   aes(x=axis1, y=axis2, fill=Treatment, alpha = 0.1), 
-              size=0.2, show.legend=FALSE) +
-  geom_point(data=sites.long1, 
-               aes(x=axis1, y=axis2, fill=Treatment, shape=Treatment), 
-               size=4.5) +
-  geom_segment(data=species.long.1, 
-                 aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
-                 colour="grey0", size=.8, alpha = 0.4) +
-  scale_color_manual(name = "Species", breaks = c("Fall", "Summer", "Unseeded", "Env."),
-                         labels = c("Seeded fall dispersing", "Seeded summer dispersing", "Unseeded", "Midstory light"),
-                         values = c("darkblue", "#003c00",  "#cc461b", "black"))+
-    geom_label_repel(data=species.long.1, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
-                   alpha = 0.5, 
-                   label.padding=.1, 
-                   na.rm=TRUE,
-                   seed = 1234) +
-    geom_label_repel(data=species.long.1, 
-                    aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size =  4.5,
-                   alpha = 1, 
-                   label.padding=.1, 
-                   fill = NA,
-                   na.rm=TRUE,
-                   seed = 1234) +
-    BioR.theme  +
-    coord_fixed(ratio=1)+
-  annotate("text", x = -1.5, y = 2, label = "Y1: 2022", size = 7, fontface =2)
-
-dbRDA.2022.plot.jac
+# # Plot it!
+# 
+# 
+# dbRDA.2022.plot.jac <- ggplot() + 
+#     geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
+#     geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +  
+#     xlab(axis.long1[1, "label"]) +
+#     ylab(axis.long1[2, "label"]) +  
+#     scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+#                          labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+#                          values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
+#     scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+#                          labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+#                          values = c(21, 22, 23, 24, 25))+
+#   geom_polygon(data=Treatment.ellipses.22.1, 
+#                    aes(x=axis1, y=axis2, fill=Treatment, alpha = 0.1), 
+#               size=0.2, show.legend=FALSE) +
+#   geom_point(data=sites.long1, 
+#                aes(x=axis1, y=axis2, fill=Treatment, shape=Treatment), 
+#                size=4.5) +
+#   geom_segment(data=species.long.1, 
+#                  aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
+#                  colour="grey0", size=.8, alpha = 0.4) +
+#   scale_color_manual(name = "Species", breaks = c("Fall", "Summer", "Unseeded", "Env."),
+#                          labels = c("Seeded fall dispersing", "Seeded summer dispersing", "Unseeded", "Midstory light"),
+#                          values = c("darkblue", "#003c00",  "#cc461b", "black"))+
+#     geom_label_repel(data=species.long.1, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
+#                    alpha = 0.5, 
+#                    label.padding=.1, 
+#                    na.rm=TRUE,
+#                    seed = 1234) +
+#     geom_label_repel(data=species.long.1, 
+#                     aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size =  4.5,
+#                    alpha = 1, 
+#                    label.padding=.1, 
+#                    fill = NA,
+#                    na.rm=TRUE,
+#                    seed = 1234) +
+#     BioR.theme  +
+#     coord_fixed(ratio=1)+
+#   annotate("text", x = -0.5, y = 2, label = "Y1: 2022", size = 7, fontface =2)
+# 
+# dbRDA.2022.plot.jac
 
 
 ```
@@ -2308,45 +3184,45 @@ dbRDA.2022.plot.jac
 
 ```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 12, fig.height = 4}
 
-#Make a wide formatted dataset
-inner_wide_2023 <- inner_cover_max_reduced_lumped  %>%
-  filter(Year %in% 2023) %>% 
-  spread(key="SPP6", value="max_cover") 
-
-#Replace NA values with 0
-
-inner_wide_2023[is.na(inner_wide_2023)] <- 0 
-
-#Turn our dataset into a matrix 
-inner_wide_mat_2023 <- inner_wide_2023[,-c(1,2,3)]
-
-# make new dataset for labels & envdata
-
-## get the treatment labels
-inner_wide_labels_2023 <- inner_wide_2023[,c(1,2,3)]
-
-## Bare ground dataset
-inner_bare_cover_2023 <- inner_bare_cover %>% 
-  filter(Year == "2023") %>% 
-   rename("Bare_cover" = "max_cover") %>% 
-  select(-SPP6)
-
-## Light dataset
-
-light_2023 <- light_fall_2023 %>% 
-  group_by(Block, Treatment, Location) %>% 
-  summarize(Mean_Light = mean(Light)) %>% 
-  spread(key = Location , value = Mean_Light)
-
-## join
-
-env.data.2023.bare <- full_join(inner_wide_labels_2023, inner_bare_cover_2023) 
-
-env.data.2023 <- full_join(env.data.2023.bare, light_2023)
-
-# Standardize by max 
-
-inner.pa.2023 <- decostand(inner_wide_mat_2023, "pa")
+# #Make a wide formatted dataset
+# inner_wide_2023 <- inner_cover_max_reduced_lumped  %>%
+#   filter(Year %in% 2023) %>% 
+#   spread(key="SPP6", value="max_cover") 
+# 
+# #Replace NA values with 0
+# 
+# inner_wide_2023[is.na(inner_wide_2023)] <- 0 
+# 
+# #Turn our dataset into a matrix 
+# inner_wide_mat_2023 <- inner_wide_2023[,-c(1,2,3)]
+# 
+# # make new dataset for labels & envdata
+# 
+# ## get the treatment labels
+# inner_wide_labels_2023 <- inner_wide_2023[,c(1,2,3)]
+# 
+# ## Bare ground dataset
+# inner_bare_cover_2023 <- inner_bare_cover %>% 
+#   filter(Year == "2023") %>% 
+#    rename("Bare_cover" = "max_cover") %>% 
+#   select(-SPP6)
+# 
+# ## Light dataset
+# 
+# light_2023 <- light_fall_2023 %>% 
+#   group_by(Block, Treatment, Location) %>% 
+#   summarize(Mean_Light = mean(Light)) %>% 
+#   spread(key = Location , value = Mean_Light)
+# 
+# ## join
+# 
+# env.data.2023.bare <- full_join(inner_wide_labels_2023, inner_bare_cover_2023) 
+# 
+# env.data.2023 <- full_join(env.data.2023.bare, light_2023)
+# 
+# # Standardize by max 
+# 
+# inner.pa.2023 <- decostand(inner_wide_mat_2023, "pa")
 
 ```
 
@@ -2357,43 +3233,43 @@ inner.pa.2023 <- decostand(inner_wide_mat_2023, "pa")
 
 #### it works by: 1) making the distance matrix based on your desired measure, 2) doing a PCoA, 3) taking the PCoA eigenvectors and putting them into an RDA.
 
-
-### Use the capscale function (not the dbRDA since it doesn't provide species scores)
-dbRDA.jac <- capscale(inner.pa.2023  ~ Treatment, data = env.data.2023,  dist="jaccard", add = TRUE)
-
-## dbRDA results
-dbRDA.jac
-
-## PERMANOVA results
-anova(dbRDA.jac, step = 1000, by = "terms", permu = 999)
-
-### Pair-wise comparisons
-
-BiodiversityR::multiconstrained(method = "capscale", inner.pa.2023  ~ Treatment, data = env.data.2023,  dist="jaccard", add = TRUE)
+# 
+# ### Use the capscale function (not the dbRDA since it doesn't provide species scores)
+# dbRDA.jac <- capscale(inner.pa.2023  ~ Treatment, data = env.data.2023,  dist="jaccard", add = TRUE)
+# 
+# ## dbRDA results
+# dbRDA.jac
+# 
+# ## PERMANOVA results
+# anova(dbRDA.jac, step = 1000, by = "terms", permu = 999)
+# 
+# ### Pair-wise comparisons
+# 
+# BiodiversityR::multiconstrained(method = "capscale", inner.pa.2023  ~ Treatment, data = env.data.2023,  dist="jaccard", add = TRUE)
 ```
 
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 ### Get the basic ordination plot 
 
-plot2 <- ordiplot(dbRDA.jac, choices = c(1,2))
+# plot2 <- ordiplot(dbRDA.jac, choices = c(1,2))
 ```
 
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 ### extract the site information
-
-sites.long2 <- sites.long(plot2, env.data = env.data.2023)
-
-head(sites.long2)
-
-### extract the species information
-
-species.long2 <- species.long(plot2)
-species.long2
-
-### extract the first two axis info
-
-axis.long2 <- axis.long(dbRDA.jac, choices = c(1,2))
-axis.long2 
+# 
+# sites.long2 <- sites.long(plot2, env.data = env.data.2023)
+# 
+# head(sites.long2)
+# 
+# ### extract the species information
+# 
+# species.long2 <- species.long(plot2)
+# species.long2
+# 
+# ### extract the first two axis info
+# 
+# axis.long2 <- axis.long(dbRDA.jac, choices = c(1,2))
+# axis.long2 
 ```
 
 
@@ -2401,24 +3277,24 @@ axis.long2
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 # Do an envfit to find influential speicies (p < 0.05)
 
-
-spec.envfit <- envfit(plot2, env=inner.pa.2023)
-spec.data.envfit <- data.frame(r=spec.envfit$vectors$r, p=spec.envfit$vectors$pvals)
-species.long2 <- species.long(plot2, spec.data=spec.data.envfit)
-species.long2
-
-
-species.long3 <- species.long2[species.long2$p < 0.01, ]
-species.long3
-
-# Join influential species dataframe to species list information so we can later color species labels by seeded status
-
-species.long3 <- species.long3 %>% 
-  rename(SPP6 = "labels")
-
-species.long3 <- left_join(species.long3, species_list_PE, by = "SPP6")
-
-
+# 
+# spec.envfit <- envfit(plot2, env=inner.pa.2023)
+# spec.data.envfit <- data.frame(r=spec.envfit$vectors$r, p=spec.envfit$vectors$pvals)
+# species.long2 <- species.long(plot2, spec.data=spec.data.envfit)
+# species.long2
+# 
+# 
+# species.long3 <- species.long2[species.long2$p < 0.01, ]
+# species.long3
+# 
+# # Join influential species dataframe to species list information so we can later color species labels by seeded status
+# 
+# species.long3 <- species.long3 %>% 
+#   rename(SPP6 = "labels")
+# 
+# species.long3 <- left_join(species.long3, species_list_PE, by = "SPP6")
+# 
+# 
 
 ```
 
@@ -2427,59 +3303,59 @@ species.long3 <- left_join(species.long3, species_list_PE, by = "SPP6")
 ```{r, echo = FALSE,  message = FALSE, warning = FALSE}
 # Get the ellipse information
 
-ordiplot(dbRDA.jac, choices = c(1,2))
-Treatment.ellipses <- ordiellipse(plot2, groups=env.data.2023$Treatment, display="sites", kind="sd")
-Treatment.ellipses.long2 <- ordiellipse.long(Treatment.ellipses, grouping.name="Treatment")
+# ordiplot(dbRDA.jac, choices = c(1,2))
+# Treatment.ellipses <- ordiellipse(plot2, groups=env.data.2023$Treatment, display="sites", kind="sd")
+# Treatment.ellipses.long2 <- ordiellipse.long(Treatment.ellipses, grouping.name="Treatment")
 ```
 
 ```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 10, fig.height = 10}
-
-# Plot it!
-
-
-dbRDA.2023.plot.jac <- ggplot() + 
-    geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
-    geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +  
-    xlab(axis.long2[1, "label"]) +
-    ylab(axis.long2[2, "label"]) +  
-   # scale_x_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +
-   # scale_y_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +  
-    scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
-                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
-                         values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
-    scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
-                         labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
-                         values = c(21, 22, 23, 24, 25))+
-    geom_polygon(data=Treatment.ellipses.long2, 
-                   aes(x=axis1, y=axis2, fill=Treatment, alpha = 0.1), 
-              size=0.2, show.legend=FALSE) +
-  geom_point(data=sites.long2, 
-               aes(x=axis1, y=axis2, fill=Treatment, shape=Treatment), 
-               size=4.5) +
-  geom_segment(data=species.long3, 
-                 aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
-                 colour="grey0", size=0.8, alpha = 0.4) +
-    geom_label_repel(data=species.long3, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
-                   alpha = 0.5, 
-                   label.padding=.1, 
-                   na.rm=TRUE,
-                   seed = 1234) +
-    geom_label_repel(data=species.long3, 
-                    aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size =  4.5,
-                   alpha = 1, 
-                   label.padding=.1, 
-                   fill = NA,
-                   na.rm=TRUE,
-                   seed = 1234) +
-  scale_color_manual(name = "Vectors", breaks = c("Fall", "Summer", "Unseeded", "Env."),
-                         labels = c("Seeded fall dispersing species", "Seeded summer dispersing species", "Unseeded species", "Midstory light"),
-                        values = c("darkblue", "#003c00",  "#cc461b", "black"))+
-    BioR.theme  +
-    coord_fixed(ratio=1)+
-  annotate("text", x = -2.5, y = 2.5, label = "Y2: 2023", size = 7, fontface =2)
-
-
-dbRDA.2023.plot.jac
+# 
+# # Plot it!
+# 
+# 
+# dbRDA.2023.plot.jac <- ggplot() + 
+#     geom_vline(xintercept = c(0), color = "grey70", linetype = 2) +
+#     geom_hline(yintercept = c(0), color = "grey70", linetype = 2) +  
+#     xlab(axis.long2[1, "label"]) +
+#     ylab(axis.long2[2, "label"]) +  
+#    # scale_x_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +
+#    # scale_y_continuous(sec.axis = dup_axis(labels=NULL, name=NULL)) +  
+#     scale_fill_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+#                          labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+#                          values = c("#009E73", "#56B4E9",  "#F0E442","#E69F00", "#0072B2"))+
+#     scale_shape_manual(name = "Treatment", breaks = c("LE", "LL", "NAT", "NON", "SIM"),
+#                          labels = c("Summer first", "Fall first", "Natural", "No seeding", "Simultaneous"),
+#                          values = c(21, 22, 23, 24, 25))+
+#     geom_polygon(data=Treatment.ellipses.long2, 
+#                    aes(x=axis1, y=axis2, fill=Treatment, alpha = 0.1), 
+#               size=0.2, show.legend=FALSE) +
+#   geom_point(data=sites.long2, 
+#                aes(x=axis1, y=axis2, fill=Treatment, shape=Treatment), 
+#                size=4.5) +
+#   geom_segment(data=species.long3, 
+#                  aes(x=0, y=0, xend=axis1*4, yend=axis2*4), 
+#                  colour="grey0", size=0.8, alpha = 0.4) +
+#     geom_label_repel(data=species.long3, aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size = 4.5,
+#                    alpha = 0.5, 
+#                    label.padding=.1, 
+#                    na.rm=TRUE,
+#                    seed = 1234) +
+#     geom_label_repel(data=species.long3, 
+#                     aes(x=axis1*4, y=axis2*4, colour=Seeded, label=SPP6), size =  4.5,
+#                    alpha = 1, 
+#                    label.padding=.1, 
+#                    fill = NA,
+#                    na.rm=TRUE,
+#                    seed = 1234) +
+#   scale_color_manual(name = "Vectors", breaks = c("Fall", "Summer", "Unseeded", "Env."),
+#                          labels = c("Seeded fall dispersing species", "Seeded summer dispersing species", "Unseeded species", "Midstory light"),
+#                         values = c("darkblue", "#003c00",  "#cc461b", "black"))+
+#     BioR.theme  +
+#     coord_fixed(ratio=1)+
+#   annotate("text", x = -1.5, y = 2.5, label = "Y2: 2023", size = 7, fontface =2)
+# 
+# 
+# dbRDA.2023.plot.jac
 ```
 
 
@@ -2487,9 +3363,9 @@ dbRDA.2023.plot.jac
 
 ```{r, message = FALSE, echo = FALSE, warning = FALSE, fig.width = 12, fig.height = 12}
 
-RDA_panel.jac <- ggarrange(dbRDA.2022.plot.jac, dbRDA.2023.plot.jac,
-align='h', labels=c('A', 'B'), ncol = 1,
-common.legend = T, legend = "right", font.label = list(size = 20))
-
-RDA_panel.jac
+# RDA_panel.jac <- ggarrange(dbRDA.2022.plot.jac, dbRDA.2023.plot.jac,
+# align='h', labels=c('A', 'B'), ncol = 1,
+# common.legend = T, legend = "right", font.label = list(size = 20))
+# 
+# RDA_panel.jac
 ```
